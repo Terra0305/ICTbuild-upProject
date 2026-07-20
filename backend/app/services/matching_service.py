@@ -41,8 +41,12 @@ def _score_pair(lost_item: LostItem, found_item: FoundItem) -> dict[str, float |
     }
 
 
-def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> list[Match]:
+def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> tuple[list[Match], list[Match]]:
+    """Returns (all matches, matches newly crossing the notification threshold)."""
+    threshold = get_settings().match_notification_threshold
     matches: list[Match] = []
+    newly_qualified: list[Match] = []
+
     for found_item in _candidate_found_items(db, lost_item):
         scores = _score_pair(lost_item, found_item)
         final_score = scorer.compute_final_score(scores)
@@ -53,6 +57,7 @@ def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> list[Match]:
             .filter(Match.lost_item_id == lost_item.id, Match.found_item_id == found_item.id)
             .first()
         )
+        was_below_threshold = match is None or match.final_score < threshold
         if match is None:
             match = Match(lost_item_id=lost_item.id, found_item_id=found_item.id)
             db.add(match)
@@ -67,8 +72,11 @@ def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> list[Match]:
         match.reason_codes = reasons
         matches.append(match)
 
+        if was_below_threshold and final_score >= threshold:
+            newly_qualified.append(match)
+
     db.commit()
-    return matches
+    return matches, newly_qualified
 
 
 def get_top_matches(db: Session, lost_item_id, limit: int = 5) -> list[Match]:

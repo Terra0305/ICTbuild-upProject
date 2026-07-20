@@ -17,7 +17,12 @@ from app.schemas.schemas import (
     MatchResultItem,
     MatchScoreBreakdown,
 )
-from app.services import found_item_service, lost_item_service, matching_service
+from app.services import (
+    found_item_service,
+    lost_item_service,
+    matching_service,
+    notification_service,
+)
 
 router = APIRouter(prefix="/lost-items", tags=["lost-items"])
 
@@ -56,7 +61,8 @@ async def create_lost_item(
         description=description,
         image=image,
     )
-    matching_service.run_matching_for_lost_item(db, lost_item)
+    _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
+    notification_service.notify_matches(db, newly_qualified)
 
     return LostItemCreateResponse(
         id=lost_item.id,
@@ -110,7 +116,8 @@ def rematch_lost_item(
     db: Session = Depends(get_db),
 ) -> list[LostItem]:
     lost_item = lost_item_service.get_owned_lost_item(db, user, lost_item_id)
-    matching_service.run_matching_for_lost_item(db, lost_item)
+    _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
+    notification_service.notify_matches(db, newly_qualified)
     return [lost_item]
 
 

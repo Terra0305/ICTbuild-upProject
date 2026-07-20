@@ -46,6 +46,7 @@ export default function NewLostItemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [createdId, setCreatedId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -122,7 +123,8 @@ export default function NewLostItemPage() {
     if (form.image) body.append("image", form.image);
 
     try {
-      await apiFetch<{ id: string }>("/lost-items", { method: "POST", body });
+      const created = await apiFetch<{ id: string }>("/lost-items", { method: "POST", body });
+      setCreatedId(created.id);
       setSubmitted(true);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -145,13 +147,24 @@ export default function NewLostItemPage() {
         <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
           등록하신 분실물과 습득물 데이터를 비교해 추천 후보를 찾는 중입니다.
         </p>
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          className="mt-8 rounded-full bg-black px-6 py-3 text-sm font-medium text-white dark:bg-white dark:text-black"
-        >
-          홈으로 돌아가기
-        </button>
+        <div className="mt-8 flex gap-3">
+          {createdId && (
+            <button
+              type="button"
+              onClick={() => router.push(`/lost/${createdId}/matches`)}
+              className="rounded-full bg-black px-6 py-3 text-sm font-medium text-white dark:bg-white dark:text-black"
+            >
+              매칭 결과 보기
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => router.push("/lost")}
+            className="rounded-full border border-zinc-300 px-6 py-3 text-sm dark:border-zinc-700"
+          >
+            내 분실물 목록
+          </button>
+        </div>
       </div>
     );
   }
