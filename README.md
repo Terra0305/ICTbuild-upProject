@@ -32,7 +32,7 @@ docker compose up -d postgres
 ```bash
 cd backend
 cp .env.example .env   # 값 채워넣기
-python3.11 -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head    # 마이그레이션이 추가된 이후부터 사용
 uvicorn app.main:app --reload
