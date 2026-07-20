@@ -3,7 +3,7 @@ import uuid
 from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Numeric, String, Text, UniqueConstraint
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, REAL, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.session import Base
@@ -82,6 +82,7 @@ class LostItem(UUIDPKMixin, TimestampMixin, Base):
         index=True,
     )
     normalized_text: Mapped[str | None] = mapped_column(Text)
+    text_embedding: Mapped[list[float] | None] = mapped_column(ARRAY(REAL))
 
     user: Mapped["User"] = relationship(back_populates="lost_items")
 
@@ -110,6 +111,7 @@ class FoundItem(UUIDPKMixin, TimestampMixin, Base):
         index=True,
     )
     normalized_text: Mapped[str | None] = mapped_column(Text)
+    text_embedding: Mapped[list[float] | None] = mapped_column(ARRAY(REAL))
     raw_payload: Mapped[dict | None] = mapped_column(JSONB)
     collected_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.ai.normalizer import build_normalized_text
+from app.ai.text_encoder import encode_text
 from app.models import FoundItem, FoundItemStatus
 
 
@@ -40,6 +41,10 @@ def upsert_found_item(
         .first()
     )
     normalized_text = build_normalized_text(category_code, title, color_codes, description)
+    try:
+        text_embedding = encode_text(normalized_text)
+    except Exception:  # noqa: BLE001 - public-data ingestion continues without an embedding
+        text_embedding = None
 
     if existing is not None:
         existing.title = title
@@ -55,6 +60,7 @@ def upsert_found_item(
         existing.detail_url = detail_url
         existing.status = status_value
         existing.normalized_text = normalized_text
+        existing.text_embedding = text_embedding
         if raw_payload is not None:
             existing.raw_payload = raw_payload
         db.commit()
@@ -77,6 +83,7 @@ def upsert_found_item(
         detail_url=detail_url,
         status=status_value,
         normalized_text=normalized_text,
+        text_embedding=text_embedding,
         raw_payload=raw_payload,
         collected_at=datetime.now(UTC),
     )

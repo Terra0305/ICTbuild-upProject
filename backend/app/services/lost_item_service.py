@@ -7,6 +7,7 @@ from fastapi import HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.ai.normalizer import build_normalized_text, normalize_whitespace
+from app.ai.text_encoder import encode_text
 from app.core.config import get_settings
 from app.models import LostItem, LostItemStatus, User
 
@@ -83,6 +84,11 @@ async def create_lost_item(
         normalized_custom_category,
         normalized_custom_color,
     )
+    try:
+        text_embedding = encode_text(normalized_text)
+    except Exception:  # noqa: BLE001 - model download/inference must not block registration
+        logger.exception("Text embedding creation failed; continuing without an embedding")
+        text_embedding = None
 
     lost_item = LostItem(
         user_id=user.id,
@@ -97,6 +103,7 @@ async def create_lost_item(
         description=description,
         image_url=image_url,
         normalized_text=normalized_text,
+        text_embedding=text_embedding,
         status=LostItemStatus.ACTIVE,
     )
     db.add(lost_item)
@@ -148,6 +155,11 @@ def update_lost_item(db: Session, lost_item: LostItem, **fields) -> LostItem:
             lost_item.custom_category,
             lost_item.custom_color_text,
         )
+        try:
+            lost_item.text_embedding = encode_text(lost_item.normalized_text)
+        except Exception:  # noqa: BLE001 - preserve the updated item for later reprocessing
+            logger.exception("Text embedding update failed; continuing without a new embedding")
+            lost_item.text_embedding = None
 
     db.commit()
     db.refresh(lost_item)
