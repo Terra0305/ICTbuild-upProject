@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch, ApiError } from "@/lib/api";
+import { isAuthenticated } from "@/lib/auth";
 import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
 import {
   validateDescription,
@@ -45,6 +46,12 @@ export default function NewLostItemPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.push("/login");
+    }
+  }, [router]);
 
   function toggleColor(code: string) {
     setForm((prev) => ({
@@ -118,7 +125,10 @@ export default function NewLostItemPage() {
       await apiFetch<{ id: string }>("/lost-items", { method: "POST", body });
       setSubmitted(true);
     } catch (err) {
-      if (err instanceof ApiError) {
+      if (err instanceof ApiError && err.status === 401) {
+        setSubmitError("로그인이 만료되었습니다. 다시 로그인해주세요.");
+        router.push("/login");
+      } else if (err instanceof ApiError) {
         setSubmitError(`등록에 실패했습니다 (상태 코드 ${err.status}). 잠시 후 다시 시도해주세요.`);
       } else {
         setSubmitError("아직 등록 API가 연결되지 않았습니다. 백엔드 배포 완료 후 다시 시도해주세요.");
