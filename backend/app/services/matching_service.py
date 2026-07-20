@@ -32,7 +32,12 @@ def _score_pair(lost_item: LostItem, found_item: FoundItem) -> dict[str, float |
     lost_text = lost_item.normalized_text or ""
     found_text = found_item.normalized_text or ""
     return {
-        "text": scorer.text_score(lost_text, found_text),
+        "text": scorer.text_score(
+            lost_text,
+            found_text,
+            lost_item.text_embedding,
+            found_item.text_embedding,
+        ),
         "image": None,
         "category": scorer.category_score(lost_item.category_code, found_item.category_code),
         "color": scorer.color_score(lost_item.color_codes or [], found_item.color_codes or []),

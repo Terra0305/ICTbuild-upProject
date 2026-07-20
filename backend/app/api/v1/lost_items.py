@@ -2,7 +2,16 @@ import json
 import uuid
 from datetime import UTC, date, datetime
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    UploadFile,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from app.ai.scorer import score_label
@@ -19,6 +28,7 @@ from app.schemas.schemas import (
 )
 from app.services import (
     found_item_service,
+    lost112_sync_service,
     lost_item_service,
     matching_service,
     notification_service,
@@ -29,6 +39,7 @@ router = APIRouter(prefix="/lost-items", tags=["lost-items"])
 
 @router.post("", response_model=LostItemCreateResponse, status_code=201)
 async def create_lost_item(
+    background_tasks: BackgroundTasks,
     title: str = Form(..., min_length=2, max_length=100),
     category_code: str = Form(...),
     custom_category: str | None = Form(None, max_length=50),
@@ -71,11 +82,12 @@ async def create_lost_item(
     )
     _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
     notification_service.notify_matches(db, newly_qualified)
+    background_tasks.add_task(lost112_sync_service.backfill_lost_item_by_id, lost_item.id)
 
     return LostItemCreateResponse(
         id=lost_item.id,
         status=lost_item.status,
-        matching_status="DONE",
+        matching_status="PROCESSING",
         created_at=lost_item.created_at,
     )
 
@@ -160,9 +172,7 @@ def get_matches(
             )
         )
 
-    return MatchListResponse(
-        lost_item_id=lost_item_id, generated_at=datetime.now(UTC), items=items
-    )
+    return MatchListResponse(lost_item_id=lost_item_id, generated_at=datetime.now(UTC), items=items)
 
 
 def _to_float(value) -> float | None:

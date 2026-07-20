@@ -1,15 +1,15 @@
 """Matching score calculator per spec §8.2-§8.5.
 
-Note: text similarity uses difflib.SequenceMatcher over the normalized_text
-sentences as a lightweight MVP stand-in for the real multilingual
-Sentence-Transformer embedding (TEXT_MODEL_NAME / app/ai/text_encoder.py).
-Swapping in the real model later does not change this module's contract:
-every *_score function still returns a value in [0, 1] or None when the
-inputs required for that dimension are missing.
+Text similarity uses persisted Sentence-Transformer embeddings when available,
+with a lightweight string-comparison fallback for legacy records or temporary
+model failures. Every *_score function returns a value in [0, 1] or None when
+the inputs required for that dimension are missing.
 """
 
 import difflib
 from datetime import date
+
+import numpy as np
 
 WEIGHTS: dict[str, float] = {
     "text": 0.35,
@@ -21,7 +21,21 @@ WEIGHTS: dict[str, float] = {
 }
 
 
-def text_score(lost_normalized_text: str, found_normalized_text: str) -> float:
+def text_score(
+    lost_normalized_text: str,
+    found_normalized_text: str,
+    lost_embedding: list[float] | None = None,
+    found_embedding: list[float] | None = None,
+) -> float:
+    """Use the persisted multilingual embedding when both sides have one.
+
+    Text-only fallback keeps old records (or a temporary model failure) matchable.
+    SentenceTransformer embeddings are normalised on creation, so their dot product
+    is cosine similarity; negative similarities are not meaningful match scores.
+    """
+    if lost_embedding and found_embedding and len(lost_embedding) == len(found_embedding):
+        similarity = float(np.dot(np.asarray(lost_embedding), np.asarray(found_embedding)))
+        return min(max(similarity, 0.0), 1.0)
     return difflib.SequenceMatcher(None, lost_normalized_text, found_normalized_text).ratio()
 
 

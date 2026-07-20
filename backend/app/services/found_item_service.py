@@ -41,12 +41,9 @@ def upsert_found_item(
         .first()
     )
     normalized_text = build_normalized_text(category_code, title, color_codes, description)
-    try:
-        text_embedding = encode_text(normalized_text)
-    except Exception:  # noqa: BLE001 - public-data ingestion continues without an embedding
-        text_embedding = None
 
     if existing is not None:
+        text_changed = existing.normalized_text != normalized_text
         existing.title = title
         existing.category_code = category_code
         existing.color_codes = color_codes
@@ -59,13 +56,22 @@ def upsert_found_item(
         existing.image_url = image_url
         existing.detail_url = detail_url
         existing.status = status_value
-        existing.normalized_text = normalized_text
-        existing.text_embedding = text_embedding
+        if text_changed:
+            existing.normalized_text = normalized_text
+            try:
+                existing.text_embedding = encode_text(normalized_text)
+            except Exception:  # noqa: BLE001 - public-data ingestion continues without an embedding
+                existing.text_embedding = None
         if raw_payload is not None:
             existing.raw_payload = raw_payload
         db.commit()
         db.refresh(existing)
         return existing, False
+
+    try:
+        text_embedding = encode_text(normalized_text)
+    except Exception:  # noqa: BLE001 - public-data ingestion continues without an embedding
+        text_embedding = None
 
     found_item = FoundItem(
         source=source,
