@@ -6,6 +6,22 @@ export function validateLostItemTitle(title: string): string | null {
   return null;
 }
 
+export function validateCustomCategory(category: string): string | null {
+  const trimmed = category.trim();
+  if (trimmed.length < 2 || trimmed.length > 50) {
+    return "기타 분류는 2~50자로 입력해주세요.";
+  }
+  return null;
+}
+
+export function validateCustomColor(color: string): string | null {
+  const trimmed = color.trim();
+  if (trimmed.length < 1 || trimmed.length > 50) {
+    return "기타 색상은 1~50자로 입력해주세요.";
+  }
+  return null;
+}
+
 export function validatePlaceText(placeText: string): string | null {
   if (placeText.length > 200) {
     return "상세 장소는 200자 이하로 입력해주세요.";

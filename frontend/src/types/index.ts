@@ -8,7 +8,9 @@ export interface LostItem {
   id: string;
   title: string;
   categoryCode: string;
+  customCategory?: string;
   colorCodes: string[];
+  customColorText?: string;
   lostDate: string;
   regionCode: string;
   placeText?: string;

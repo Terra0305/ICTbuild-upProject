@@ -7,6 +7,8 @@ import { apiFetch, ApiError } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
 import {
+  validateCustomCategory,
+  validateCustomColor,
   validateDescription,
   validateImageFile,
   validateLostDate,
@@ -17,7 +19,9 @@ import {
 interface FormState {
   title: string;
   categoryCode: string;
+  customCategory: string;
   colorCodes: string[];
+  customColorText: string;
   lostDate: string;
   regionCode: string;
   placeText: string;
@@ -30,7 +34,9 @@ const STEP_LABELS = ["물건 정보", "분실 시점·장소", "상세 설명", 
 const INITIAL_STATE: FormState = {
   title: "",
   categoryCode: "",
+  customCategory: "",
   colorCodes: [],
+  customColorText: "",
   lostDate: "",
   regionCode: "",
   placeText: "",
@@ -68,6 +74,8 @@ export default function NewLostItemPage() {
       const titleError = validateLostItemTitle(form.title);
       if (titleError) return titleError;
       if (!form.categoryCode) return "카테고리를 선택해주세요.";
+      if (form.categoryCode === "ETC") return validateCustomCategory(form.customCategory);
+      if (form.colorCodes.includes("OTHER")) return validateCustomColor(form.customColorText);
     }
     if (step === 1) {
       const dateError = validateLostDate(form.lostDate);
@@ -115,7 +123,9 @@ export default function NewLostItemPage() {
     const body = new FormData();
     body.append("title", form.title);
     body.append("category_code", form.categoryCode);
-    body.append("color_codes", JSON.stringify(form.colorCodes));
+    if (form.categoryCode === "ETC") body.append("custom_category", form.customCategory.trim());
+    body.append("color_codes", JSON.stringify(form.colorCodes.filter((code) => code !== "OTHER")));
+    if (form.colorCodes.includes("OTHER")) body.append("custom_color_text", form.customColorText.trim());
     body.append("lost_date", form.lostDate);
     body.append("region_code", form.regionCode);
     body.append("place_text", form.placeText);
@@ -205,7 +215,13 @@ export default function NewLostItemPage() {
                 <button
                   key={opt.code}
                   type="button"
-                  onClick={() => setForm({ ...form, categoryCode: opt.code })}
+                  onClick={() =>
+                    setForm({
+                      ...form,
+                      categoryCode: opt.code,
+                      customCategory: opt.code === "ETC" ? form.customCategory : "",
+                    })
+                  }
                   className={`rounded-full border px-3 py-1.5 text-xs ${
                     form.categoryCode === opt.code
                       ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
@@ -216,6 +232,18 @@ export default function NewLostItemPage() {
                 </button>
               ))}
             </div>
+            {form.categoryCode === "ETC" && (
+              <label className="mt-2 flex flex-col gap-1.5 text-sm">
+                기타 분류 직접 입력 (2~50자)
+                <input
+                  value={form.customCategory}
+                  onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
+                  maxLength={50}
+                  className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                  placeholder="예: 악기, 반려동물용품, 캠핑용품"
+                />
+              </label>
+            )}
           </div>
           <div className="flex flex-col gap-1.5 text-sm">
             색상 (복수 선택 가능)
@@ -235,6 +263,18 @@ export default function NewLostItemPage() {
                 </button>
               ))}
             </div>
+            {form.colorCodes.includes("OTHER") && (
+              <label className="mt-2 flex flex-col gap-1.5 text-sm">
+                기타 색상 직접 입력 (1~50자)
+                <input
+                  value={form.customColorText}
+                  onChange={(e) => setForm({ ...form, customColorText: e.target.value })}
+                  maxLength={50}
+                  className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+                  placeholder="예: 민트색, 버건디, 무지개색"
+                />
+              </label>
+            )}
           </div>
         </div>
       )}
@@ -311,11 +351,22 @@ export default function NewLostItemPage() {
             </div>
             <div className="flex justify-between py-1">
               <dt className="text-zinc-500">카테고리</dt>
-              <dd>{CATEGORY_OPTIONS.find((c) => c.code === form.categoryCode)?.label ?? "-"}</dd>
+              <dd>
+                {form.categoryCode === "ETC"
+                  ? form.customCategory || "기타"
+                  : (CATEGORY_OPTIONS.find((c) => c.code === form.categoryCode)?.label ?? "-")}
+              </dd>
             </div>
             <div className="flex justify-between py-1">
               <dt className="text-zinc-500">색상</dt>
-              <dd>{form.colorCodes.join(", ") || "-"}</dd>
+              <dd>
+                {[
+                  ...form.colorCodes.filter((code) => code !== "OTHER"),
+                  ...(form.colorCodes.includes("OTHER") && form.customColorText
+                    ? [form.customColorText]
+                    : []),
+                ].join(", ") || "-"}
+              </dd>
             </div>
             <div className="flex justify-between py-1">
               <dt className="text-zinc-500">분실 날짜</dt>

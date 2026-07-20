@@ -47,7 +47,9 @@ class LostItemResponse(BaseModel):
     id: uuid.UUID
     title: str
     category_code: str
+    custom_category: str | None
     color_codes: list[str]
+    custom_color_text: str | None
     lost_date: date
     region_code: str
     place_text: str | None
@@ -63,7 +65,9 @@ class LostItemResponse(BaseModel):
 class LostItemUpdateRequest(BaseModel):
     title: str | None = Field(default=None, min_length=2, max_length=100)
     category_code: str | None = None
+    custom_category: str | None = Field(default=None, min_length=2, max_length=50)
     color_codes: list[str] | None = None
+    custom_color_text: str | None = Field(default=None, min_length=1, max_length=50)
     place_text: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
 

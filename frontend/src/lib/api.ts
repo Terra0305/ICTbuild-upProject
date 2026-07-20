@@ -92,7 +92,9 @@ interface LostItemResponseRaw {
   id: string;
   title: string;
   category_code: string;
+  custom_category: string | null;
   color_codes: string[];
+  custom_color_text: string | null;
   lost_date: string;
   region_code: string;
   place_text: string | null;
@@ -108,7 +110,9 @@ function mapLostItem(raw: LostItemResponseRaw): LostItem {
     id: raw.id,
     title: raw.title,
     categoryCode: raw.category_code,
+    customCategory: raw.custom_category ?? undefined,
     colorCodes: raw.color_codes,
+    customColorText: raw.custom_color_text ?? undefined,
     lostDate: raw.lost_date,
     regionCode: raw.region_code,
     placeText: raw.place_text ?? undefined,

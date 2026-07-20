@@ -8,6 +8,13 @@ export const CATEGORY_OPTIONS = [
   { code: "CLOTHING", label: "의류" },
   { code: "JEWELRY", label: "귀금속·시계" },
   { code: "KEY", label: "열쇠" },
+  { code: "BOOK", label: "도서·문구" },
+  { code: "UMBRELLA", label: "우산·양산" },
+  { code: "ACCESSORY", label: "패션잡화" },
+  { code: "SPORTS", label: "스포츠·레저용품" },
+  { code: "TOY", label: "완구·취미용품" },
+  { code: "BEAUTY", label: "화장품·미용용품" },
+  { code: "DOCUMENT", label: "서류·증명서" },
   { code: "ETC", label: "기타" },
 ] as const;
 
@@ -17,6 +24,18 @@ export const COLOR_OPTIONS = [
   { code: "NAVY", label: "남색" },
   { code: "BEIGE", label: "베이지" },
   { code: "GRAY", label: "회색" },
+  { code: "RED", label: "빨강" },
+  { code: "BLUE", label: "파랑" },
+  { code: "GREEN", label: "초록" },
+  { code: "YELLOW", label: "노랑" },
+  { code: "PINK", label: "분홍" },
+  { code: "PURPLE", label: "보라" },
+  { code: "BROWN", label: "갈색" },
+  { code: "ORANGE", label: "주황" },
+  { code: "SILVER", label: "은색" },
+  { code: "GOLD", label: "금색" },
+  { code: "TRANSPARENT", label: "투명" },
+  { code: "OTHER", label: "기타" },
 ] as const;
 
 export const MATCH_DISPLAY_THRESHOLD = 0.5;

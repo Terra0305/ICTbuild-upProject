@@ -49,7 +49,9 @@ async def create_lost_item(
     user: User,
     title: str,
     category_code: str,
+    custom_category: str | None,
     color_codes: list[str],
+    custom_color_text: str | None,
     lost_date,
     region_code: str,
     place_text: str | None,
@@ -69,13 +71,26 @@ async def create_lost_item(
             )
         image_url = _upload_image(image, content)
 
-    normalized_text = build_normalized_text(category_code, title, color_codes, description)
+    normalized_custom_category = None
+    if category_code == "ETC" and custom_category:
+        normalized_custom_category = normalize_whitespace(custom_category)
+    normalized_custom_color = normalize_whitespace(custom_color_text) if custom_color_text else None
+    normalized_text = build_normalized_text(
+        category_code,
+        title,
+        color_codes,
+        description,
+        normalized_custom_category,
+        normalized_custom_color,
+    )
 
     lost_item = LostItem(
         user_id=user.id,
         title=normalize_whitespace(title),
         category_code=category_code,
+        custom_category=normalized_custom_category,
         color_codes=color_codes,
+        custom_color_text=normalized_custom_color,
         lost_date=lost_date,
         region_code=region_code,
         place_text=place_text,
@@ -114,12 +129,24 @@ def update_lost_item(db: Session, lost_item: LostItem, **fields) -> LostItem:
         if value is None:
             continue
         setattr(lost_item, key, value)
-        if key in {"title", "category_code", "color_codes", "description"}:
+        if key in {
+            "title",
+            "category_code",
+            "custom_category",
+            "color_codes",
+            "custom_color_text",
+            "description",
+        }:
             changed_text_inputs = True
 
     if changed_text_inputs:
         lost_item.normalized_text = build_normalized_text(
-            lost_item.category_code, lost_item.title, lost_item.color_codes, lost_item.description
+            lost_item.category_code,
+            lost_item.title,
+            lost_item.color_codes,
+            lost_item.description,
+            lost_item.custom_category,
+            lost_item.custom_color_text,
         )
 
     db.commit()

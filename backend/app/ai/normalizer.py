@@ -26,6 +26,13 @@ CATEGORY_LABELS: dict[str, str] = {
     "CLOTHING": "의류",
     "JEWELRY": "귀금속·시계",
     "KEY": "열쇠",
+    "BOOK": "도서·문구",
+    "UMBRELLA": "우산·양산",
+    "ACCESSORY": "패션잡화",
+    "SPORTS": "스포츠·레저용품",
+    "TOY": "완구·취미용품",
+    "BEAUTY": "화장품·미용용품",
+    "DOCUMENT": "서류·증명서",
     "ETC": "기타",
 }
 
@@ -35,6 +42,17 @@ COLOR_LABELS: dict[str, str] = {
     "NAVY": "남색",
     "BEIGE": "베이지",
     "GRAY": "회색",
+    "RED": "빨강",
+    "BLUE": "파랑",
+    "GREEN": "초록",
+    "YELLOW": "노랑",
+    "PINK": "분홍",
+    "PURPLE": "보라",
+    "BROWN": "갈색",
+    "ORANGE": "주황",
+    "SILVER": "은색",
+    "GOLD": "금색",
+    "TRANSPARENT": "투명",
 }
 
 _WHITESPACE_RE = re.compile(r"\s+")
@@ -59,15 +77,21 @@ def build_normalized_text(
     title: str,
     color_codes: list[str],
     description: str | None,
+    custom_category: str | None = None,
+    custom_color_text: str | None = None,
 ) -> str:
     """Build the AI-input sentence per spec §7.1. Region/date are scored separately
     and intentionally excluded."""
     category_label = CATEGORY_LABELS.get(category_code, category_code)
-    color_labels = ", ".join(COLOR_LABELS.get(code, code) for code in color_codes) or "정보없음"
+    if category_code == "ETC" and custom_category:
+        category_label = normalize_whitespace(custom_category)
+    color_labels = [COLOR_LABELS.get(code, code) for code in color_codes]
+    if custom_color_text:
+        color_labels.append(normalize_whitespace(custom_color_text))
     parts = [
         f"[카테고리] {category_label}",
         f"[물품명] {normalize_whitespace(title)}",
-        f"[색상] {color_labels}",
+        f"[색상] {', '.join(color_labels) or '정보없음'}",
     ]
     if description:
         parts.append(f"[설명] {normalize_whitespace(description)}")

@@ -31,7 +31,9 @@ router = APIRouter(prefix="/lost-items", tags=["lost-items"])
 async def create_lost_item(
     title: str = Form(..., min_length=2, max_length=100),
     category_code: str = Form(...),
+    custom_category: str | None = Form(None, max_length=50),
     color_codes: str = Form("[]"),
+    custom_color_text: str | None = Form(None, max_length=50),
     lost_date: date = Form(...),
     region_code: str = Form(...),
     place_text: str | None = Form(None, max_length=200),
@@ -42,6 +44,10 @@ async def create_lost_item(
 ) -> LostItemCreateResponse:
     if lost_date > datetime.now(UTC).date():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "분실 날짜는 미래일 수 없습니다.")
+    if category_code == "ETC" and (custom_category is None or len(custom_category.strip()) < 2):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "기타 분류는 2~50자로 입력해주세요.")
+    if custom_color_text is not None and not custom_color_text.strip():
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "기타 색상을 입력해주세요.")
     try:
         parsed_colors = json.loads(color_codes)
     except json.JSONDecodeError as exc:
@@ -54,7 +60,9 @@ async def create_lost_item(
         user,
         title=title,
         category_code=category_code,
+        custom_category=custom_category,
         color_codes=parsed_colors,
+        custom_color_text=custom_color_text,
         lost_date=lost_date,
         region_code=region_code,
         place_text=place_text,
