@@ -13,6 +13,10 @@ app = FastAPI(title="ReFind API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[settings.frontend_url],
+    # Vercel issues a unique per-deployment URL in addition to the stable
+    # production domain; allow both for this project without opening CORS
+    # to arbitrary vercel.app sites.
+    allow_origin_regex=r"^https://ic-tbuild-up-project(-[a-z0-9]+-laons-projects-[a-z0-9]+)?\.vercel\.app$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
