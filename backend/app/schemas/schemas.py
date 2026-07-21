@@ -1,5 +1,6 @@
 import uuid
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -56,6 +57,8 @@ class LostItemResponse(BaseModel):
     description: str | None
     image_url: str | None
     status: str
+    closure_reason: str | None
+    closed_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -70,6 +73,15 @@ class LostItemUpdateRequest(BaseModel):
     custom_color_text: str | None = Field(default=None, min_length=1, max_length=50)
     place_text: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
+
+
+class LostItemCloseRequest(BaseModel):
+    reason: Literal[
+        "MATCHED_BY_REFIND",
+        "FOUND_ELSEWHERE",
+        "NOT_FOUND",
+        "INCORRECT_REGISTRATION",
+    ]
 
 
 # --- Found items ---

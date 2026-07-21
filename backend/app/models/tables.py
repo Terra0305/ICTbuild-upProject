@@ -21,6 +21,13 @@ class LostItemStatus(enum.StrEnum):
     CLOSED = "CLOSED"
 
 
+class LostItemClosureReason(enum.StrEnum):
+    MATCHED_BY_REFIND = "MATCHED_BY_REFIND"
+    FOUND_ELSEWHERE = "FOUND_ELSEWHERE"
+    NOT_FOUND = "NOT_FOUND"
+    INCORRECT_REGISTRATION = "INCORRECT_REGISTRATION"
+
+
 class FoundItemStatus(enum.StrEnum):
     STORED = "STORED"
     RETURNED = "RETURNED"
@@ -81,6 +88,10 @@ class LostItem(UUIDPKMixin, TimestampMixin, Base):
         default=LostItemStatus.ACTIVE,
         index=True,
     )
+    closure_reason: Mapped[LostItemClosureReason | None] = mapped_column(
+        Enum(LostItemClosureReason, name="lost_item_closure_reason")
+    )
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     normalized_text: Mapped[str | None] = mapped_column(Text)
     text_embedding: Mapped[list[float] | None] = mapped_column(ARRAY(REAL))
 

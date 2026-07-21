@@ -70,12 +70,24 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
 
             <div className="mt-3 flex items-center justify-between text-xs text-zinc-500">
               <span>출처: {match.foundItem.source}</span>
-              <a
-                href={`/found/${match.foundItem.id}`}
-                className="font-medium text-black underline dark:text-white"
-              >
-                상세보기
-              </a>
+              <div className="flex items-center gap-3">
+                {match.foundItem.detailUrl && (
+                  <a
+                    href={match.foundItem.detailUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-black underline dark:text-white"
+                  >
+                    LOST112 원문
+                  </a>
+                )}
+                <a
+                  href={`/found/${match.foundItem.id}`}
+                  className="font-medium text-black underline dark:text-white"
+                >
+                  상세보기
+                </a>
+              </div>
             </div>
           </li>
         ))}

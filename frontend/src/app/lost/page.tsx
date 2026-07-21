@@ -11,7 +11,7 @@ import type { LostItem } from "@/types";
 
 const STATUS_LABELS: Record<LostItem["status"], string> = {
   ACTIVE: "찾는 중",
-  FOUND: "매칭됨",
+  FOUND: "찾았어요",
   CLOSED: "종료",
 };
 

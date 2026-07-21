@@ -1,4 +1,9 @@
 export type LostItemStatus = "ACTIVE" | "FOUND" | "CLOSED";
+export type LostItemClosureReason =
+  | "MATCHED_BY_REFIND"
+  | "FOUND_ELSEWHERE"
+  | "NOT_FOUND"
+  | "INCORRECT_REGISTRATION";
 export type FoundItemStatus = "STORED" | "RETURNED" | "DISPOSED" | "UNKNOWN";
 export type NotificationChannel = "IN_APP" | "EMAIL";
 export type NotificationStatus = "PENDING" | "SENT" | "FAILED" | "READ";
@@ -17,6 +22,8 @@ export interface LostItem {
   description?: string;
   imageUrl?: string;
   status: LostItemStatus;
+  closureReason?: LostItemClosureReason;
+  closedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

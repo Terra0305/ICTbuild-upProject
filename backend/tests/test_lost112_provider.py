@@ -9,7 +9,7 @@ def test_parse_xml_maps_lost112_fields_and_ignores_placeholder_image() -> None:
       <header><resultCode>00</resultCode><resultMsg>NORMAL SERVICE.</resultMsg></header>
       <body>
         <items><item>
-          <atcId>F202607200001</atcId><fdYmd>20260720</fdYmd>
+          <atcId>F202607200001</atcId><fdSn>3</fdSn><fdYmd>20260720</fdYmd>
           <fdPrdtNm>검정 지갑</fdPrdtNm><prdtClNm>지갑</prdtClNm>
           <clrNm>검정</clrNm><depPlace>서울경찰서</depPlace>
           <fdSbjt>카드가 든 지갑</fdSbjt>
@@ -29,3 +29,4 @@ def test_parse_xml_maps_lost112_fields_and_ignores_placeholder_image() -> None:
     assert item.found_date == date(2026, 7, 20)
     assert item.title == "검정 지갑"
     assert item.image_url is None
+    assert item.detail_url == "https://www.lost112.go.kr/?ATC_ID=F202607200001&FD_SN=3"

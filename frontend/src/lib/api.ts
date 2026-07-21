@@ -1,5 +1,12 @@
 import { getAccessToken } from "@/lib/auth";
-import type { FoundItem, LostItem, MatchResult, Notification, User } from "@/types";
+import type {
+  FoundItem,
+  LostItem,
+  LostItemClosureReason,
+  MatchResult,
+  Notification,
+  User,
+} from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api/v1";
 
@@ -101,6 +108,8 @@ interface LostItemResponseRaw {
   description: string | null;
   image_url: string | null;
   status: "ACTIVE" | "FOUND" | "CLOSED";
+  closure_reason: LostItemClosureReason | null;
+  closed_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -119,6 +128,8 @@ function mapLostItem(raw: LostItemResponseRaw): LostItem {
     description: raw.description ?? undefined,
     imageUrl: raw.image_url ?? undefined,
     status: raw.status,
+    closureReason: raw.closure_reason ?? undefined,
+    closedAt: raw.closed_at ?? undefined,
     createdAt: raw.created_at,
     updatedAt: raw.updated_at,
   };
@@ -134,8 +145,15 @@ export async function getLostItem(id: string): Promise<LostItem> {
   return mapLostItem(raw);
 }
 
-export function closeLostItem(id: string): Promise<void> {
-  return apiFetch<void>(`/lost-items/${id}`, { method: "DELETE" });
+export async function closeLostItem(
+  id: string,
+  reason: LostItemClosureReason,
+): Promise<LostItem> {
+  const raw = await apiFetch<LostItemResponseRaw>(`/lost-items/${id}/close`, {
+    method: "POST",
+    body: { reason },
+  });
+  return mapLostItem(raw);
 }
 
 // --- Matches ---
@@ -186,7 +204,10 @@ function mapFoundItem(raw: FoundItemResponseRaw): FoundItem {
     contactText: raw.contact_text ?? undefined,
     description: raw.description ?? undefined,
     imageUrl: raw.image_url ?? undefined,
-    detailUrl: raw.detail_url ?? undefined,
+    // Older collected rows used LOST112's retired mobile subdomain.
+    detailUrl: raw.detail_url
+      ?.replace("https://m.lost112.go.kr/", "https://www.lost112.go.kr/")
+      ?? undefined,
     status: raw.status,
   };
 }

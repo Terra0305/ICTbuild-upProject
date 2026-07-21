@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import UTC, datetime
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.ai.normalizer import build_normalized_text, normalize_whitespace
 from app.ai.text_encoder import encode_text
 from app.core.config import get_settings
-from app.models import LostItem, LostItemStatus, User
+from app.models import LostItem, LostItemClosureReason, LostItemStatus, User
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +167,21 @@ def update_lost_item(db: Session, lost_item: LostItem, **fields) -> LostItem:
     return lost_item
 
 
-def close_lost_item(db: Session, lost_item: LostItem) -> LostItem:
-    lost_item.status = LostItemStatus.CLOSED
+def close_lost_item(
+    db: Session, lost_item: LostItem, reason: LostItemClosureReason
+) -> LostItem:
+    if lost_item.status != LostItemStatus.ACTIVE:
+        raise HTTPException(status.HTTP_409_CONFLICT, "이미 종료된 분실물입니다.")
+
+    found_reasons = {
+        LostItemClosureReason.MATCHED_BY_REFIND,
+        LostItemClosureReason.FOUND_ELSEWHERE,
+    }
+    lost_item.status = (
+        LostItemStatus.FOUND if reason in found_reasons else LostItemStatus.CLOSED
+    )
+    lost_item.closure_reason = reason
+    lost_item.closed_at = datetime.now(UTC)
     db.commit()
     db.refresh(lost_item)
     return lost_item

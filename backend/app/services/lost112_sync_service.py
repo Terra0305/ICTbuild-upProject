@@ -83,6 +83,7 @@ def _save_dto(db: Session, dto: FoundItemDTO) -> tuple[FoundItem, bool]:
         storage_place=dto.storage_place,
         description=dto.description,
         image_url=dto.image_url,
+        detail_url=dto.detail_url,
         status_value=FoundItemStatus.STORED,
         raw_payload=dto.raw_payload,
     )

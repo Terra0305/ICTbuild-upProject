@@ -17,8 +17,9 @@ from sqlalchemy.orm import Session
 from app.ai.scorer import score_label
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
-from app.models import LostItem, User
+from app.models import LostItem, LostItemClosureReason, User
 from app.schemas.schemas import (
+    LostItemCloseRequest,
     LostItemCreateResponse,
     LostItemResponse,
     LostItemUpdateRequest,
@@ -119,14 +120,28 @@ def update_lost_item(
     return lost_item_service.update_lost_item(db, lost_item, **data.model_dump(exclude_unset=True))
 
 
-@router.delete("/{lost_item_id}", status_code=204)
+@router.post("/{lost_item_id}/close", response_model=LostItemResponse)
 def close_lost_item(
+    lost_item_id: uuid.UUID,
+    data: LostItemCloseRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> LostItem:
+    lost_item = lost_item_service.get_owned_lost_item(db, user, lost_item_id)
+    return lost_item_service.close_lost_item(
+        db, lost_item, LostItemClosureReason(data.reason)
+    )
+
+
+@router.delete("/{lost_item_id}", status_code=204)
+def close_lost_item_legacy(
     lost_item_id: uuid.UUID,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> None:
+    """Legacy endpoint: retain compatibility with the prior single close action."""
     lost_item = lost_item_service.get_owned_lost_item(db, user, lost_item_id)
-    lost_item_service.close_lost_item(db, lost_item)
+    lost_item_service.close_lost_item(db, lost_item, LostItemClosureReason.NOT_FOUND)
 
 
 @router.post("/{lost_item_id}/rematch", response_model=list[LostItemResponse])
