@@ -17,6 +17,16 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -e ".[ai,dev]"
+      - name: Cache text-embedding model
+        uses: actions/cache@v4
+        with:
+          path: backend/app/ai/models/text-embed
+          key: text-embed-model-xenova-paraphrase-multilingual-minilm-l12-v2-quantized
+      - name: Download text-embedding model
+        run: |
+          mkdir -p app/ai/models/text-embed
+          [ -f app/ai/models/text-embed/tokenizer.json ] || curl -fL "https://huggingface.co/Xenova/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/tokenizer.json" -o app/ai/models/text-embed/tokenizer.json
+          [ -f app/ai/models/text-embed/model_quantized.onnx ] || curl -fL "https://huggingface.co/Xenova/paraphrase-multilingual-MiniLM-L12-v2/resolve/main/onnx/model_quantized.onnx" -o app/ai/models/text-embed/model_quantized.onnx
       - run: ruff check .
       - run: pytest
 

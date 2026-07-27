@@ -16,6 +16,28 @@ logger = logging.getLogger(__name__)
 
 ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
+_UPLOAD_CHUNK_BYTES = 1024 * 1024
+
+
+async def _read_upload_within_limit(file: UploadFile, max_bytes: int) -> bytes:
+    """Read an upload in chunks, aborting as soon as it exceeds ``max_bytes``.
+
+    A plain ``await file.read()`` buffers the entire body before the size can
+    be checked, so an oversized upload still spikes memory before the 10MB
+    limit gets a chance to reject it. Reading in bounded chunks caps that
+    spike to roughly one chunk past the limit.
+    """
+    chunks = bytearray()
+    while True:
+        chunk = await file.read(_UPLOAD_CHUNK_BYTES)
+        if not chunk:
+            break
+        chunks.extend(chunk)
+        if len(chunks) > max_bytes:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "이미지 파일은 최대 10MB까지 업로드할 수 있습니다."
+            )
+    return bytes(chunks)
 
 
 def _upload_image(file: UploadFile, content: bytes) -> str | None:
@@ -66,11 +88,7 @@ async def create_lost_item(
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST, "JPG, PNG, WEBP 형식만 업로드할 수 있습니다."
             )
-        content = await image.read()
-        if len(content) > MAX_IMAGE_SIZE_BYTES:
-            raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "이미지 파일은 최대 10MB까지 업로드할 수 있습니다."
-            )
+        content = await _read_upload_within_limit(image, MAX_IMAGE_SIZE_BYTES)
         image_url = _upload_image(image, content)
 
     normalized_custom_category = None
