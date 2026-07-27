@@ -11,7 +11,11 @@ COPY alembic.ini ./
 
 # The API imports the text encoder and FAISS index, so production needs the
 # optional AI dependency group as well as the base web dependencies.
-RUN pip install --no-cache-dir ".[ai]"
+# torch must come from the CPU-only wheel index first, otherwise pip pulls
+# the default CUDA build, which is far larger and OOMs on Railway's
+# memory-limited containers even though nothing here uses a GPU.
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu \
+    && pip install --no-cache-dir ".[ai]"
 
 EXPOSE 8000
 
