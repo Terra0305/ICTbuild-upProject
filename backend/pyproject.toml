@@ -25,10 +25,9 @@ dependencies = [
 [project.optional-dependencies]
 ai = [
     "numpy>=1.26",
-    "sentence-transformers>=3.1",
     "faiss-cpu>=1.9",
-    "torch>=2.4",
-    "transformers>=4.45",
+    "onnxruntime>=1.19",
+    "tokenizers>=0.20",
     "Pillow>=10.4",
 ]
 dev = [
