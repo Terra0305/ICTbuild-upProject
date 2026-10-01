@@ -21,3 +21,8 @@ frontend/.env*.local
 
 # Claude Code project-local settings (session overrides, not shared)
 .claude/settings.local.json
+
+# AWS infrastructure and deployment notes, managed locally by the infra owner
+/infra/
+/AWS_DEPLOYMENT_PLAN.md
+/CLAUDE.md
