@@ -1,10 +1,11 @@
-name: Deploy backend
+name: Deploy app
 
 on:
   push:
     branches: [main]
     paths:
       - "backend/**"
+      - "frontend/**"
       - "deploy/**"
       - ".github/workflows/deploy-backend.yml"
   workflow_dispatch:
@@ -16,6 +17,7 @@ concurrency:
 
 env:
   IMAGE_NAME: ghcr.io/terra0305/refind-backend
+  WEB_IMAGE_NAME: ghcr.io/terra0305/refind-frontend
   AWS_REGION: ap-northeast-2
 
 jobs:
@@ -47,8 +49,22 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+      - uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          push: true
+          # Same origin as the page: nginx on the host routes /api/ to the backend.
+          build-args: |
+            NEXT_PUBLIC_API_BASE_URL=/api/v1
+          tags: |
+            ${{ env.WEB_IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.WEB_IMAGE_NAME }}:latest
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=web
+          cache-to: type=gha,mode=max,scope=web
 
   deploy:
     needs: build
@@ -71,6 +87,7 @@ jobs:
           STORAGE_PUBLIC_BASE_URL: ${{ vars.STORAGE_PUBLIC_BASE_URL }}
           RAW_BASE: https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/deploy
           API_IMAGE: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          WEB_IMAGE: ${{ env.WEB_IMAGE_NAME }}:${{ github.sha }}
         run: |
           set -euo pipefail
           for name in INSTANCE_ID FRONTEND_URL STORAGE_BUCKET STORAGE_PUBLIC_BASE_URL; do
@@ -78,14 +95,15 @@ jobs:
           done
 
           # %q quoting keeps the regex's $ and backslashes intact on the host shell.
-          deploy_cmd=$(printf 'FRONTEND_URL=%q CORS_ORIGIN_REGEX=%q STORAGE_BUCKET=%q STORAGE_PUBLIC_BASE_URL=%q ./deploy.sh %q' \
-            "$FRONTEND_URL" "$CORS_ORIGIN_REGEX" "$STORAGE_BUCKET" "$STORAGE_PUBLIC_BASE_URL" "$API_IMAGE")
+          deploy_cmd=$(printf 'FRONTEND_URL=%q CORS_ORIGIN_REGEX=%q STORAGE_BUCKET=%q STORAGE_PUBLIC_BASE_URL=%q ./deploy.sh %q %q' \
+            "$FRONTEND_URL" "$CORS_ORIGIN_REGEX" "$STORAGE_BUCKET" "$STORAGE_PUBLIC_BASE_URL" "$API_IMAGE" "$WEB_IMAGE")
           params=$(jq -n --arg raw "$RAW_BASE" --arg deploy "$deploy_cmd" '{
             executionTimeout: ["1200"],
             commands: [
               "set -eu",
               "cd /opt/refind",
               "curl -fsSL \($raw)/docker-compose.prod.yml -o docker-compose.prod.yml",
+              "curl -fsSL \($raw)/nginx.conf -o nginx.conf",
               "curl -fsSL \($raw)/deploy.sh -o deploy.sh",
               "chmod 700 deploy.sh",
               $deploy

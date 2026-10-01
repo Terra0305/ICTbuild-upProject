@@ -1,14 +1,16 @@
 #!/bin/bash
-# Deploy the backend on the EC2 host. Run as root (SSM Run Command).
+# Deploy the app (API, web, nginx proxy) on the EC2 host. Run as root (SSM Run Command).
 #
-# Usage: deploy.sh <api-image>
+# Usage: deploy.sh <api-image> <web-image>
+# docker-compose.prod.yml and nginx.conf must already be in /opt/refind.
 # Per-environment settings come from environment variables:
 #   FRONTEND_URL, CORS_ORIGIN_REGEX, STORAGE_BUCKET, STORAGE_PUBLIC_BASE_URL
 # Secrets are read from Secrets Manager with the instance role and written
 # straight to .env; they are never printed. Do not add `set -x` here.
 set -euo pipefail
 
-API_IMAGE="${1:?usage: deploy.sh <api-image>}"
+API_IMAGE="${1:?usage: deploy.sh <api-image> <web-image>}"
+WEB_IMAGE="${2:?usage: deploy.sh <api-image> <web-image>}"
 APP_DIR=/opt/refind
 SECRET_ID="${SECRET_ID:-refind/backend}"
 AWS_REGION="${AWS_REGION:-ap-northeast-2}"
@@ -52,6 +54,7 @@ for key in required:
 case "${CORS_ORIGIN_REGEX:-}" in *"'"*) echo "CORS_ORIGIN_REGEX must not contain '" >&2; exit 1 ;; esac
 cat >> "$tmp_env" <<ENV
 API_IMAGE=$API_IMAGE
+WEB_IMAGE=$WEB_IMAGE
 FRONTEND_URL=$FRONTEND_URL
 CORS_ORIGIN_REGEX='${CORS_ORIGIN_REGEX:-}'
 LOST112_BASE_URL=$LOST112_BASE_URL
@@ -64,22 +67,29 @@ trap - EXIT
 
 # --- containers -----------------------------------------------------------
 "${COMPOSE[@]}" pull --quiet
-"${COMPOSE[@]}" up -d --remove-orphans
-
-echo "Waiting for the API to become healthy..."
-status=""
-for _ in $(seq 1 30); do
-  status="$(docker inspect -f '{{.State.Health.Status}}' "$("${COMPOSE[@]}" ps -q api)" 2>/dev/null || true)"
-  if [ "$status" = "healthy" ]; then
-    break
-  fi
-  sleep 5
-done
-if [ "$status" != "healthy" ]; then
-  echo "API did not become healthy (status: ${status:-unknown})" >&2
-  "${COMPOSE[@]}" logs --tail 50 api >&2
+# up fails on its own when a depends_on service never turns healthy; show why.
+"${COMPOSE[@]}" up -d --remove-orphans || {
+  "${COMPOSE[@]}" ps >&2
+  "${COMPOSE[@]}" logs --tail 50 api web proxy >&2
   exit 1
-fi
+}
+
+for service in api web proxy; do
+  echo "Waiting for $service to become healthy..."
+  status=""
+  for _ in $(seq 1 30); do
+    status="$(docker inspect -f '{{.State.Health.Status}}' "$("${COMPOSE[@]}" ps -q "$service")" 2>/dev/null || true)"
+    if [ "$status" = "healthy" ]; then
+      break
+    fi
+    sleep 5
+  done
+  if [ "$status" != "healthy" ]; then
+    echo "$service did not become healthy (status: ${status:-unknown})" >&2
+    "${COMPOSE[@]}" logs --tail 50 "$service" >&2
+    exit 1
+  fi
+done
 
 # Each deploy leaves a <sha>-tagged image; drop unused ones older than 3 days.
 docker image prune -af --filter "until=72h" >/dev/null
@@ -90,4 +100,4 @@ cat > /etc/cron.d/refind-sync <<CRON
 CRON
 chmod 644 /etc/cron.d/refind-sync
 
-echo "Deployed $API_IMAGE"
+echo "Deployed $API_IMAGE and $WEB_IMAGE"
