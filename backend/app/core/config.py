@@ -9,6 +9,12 @@ class Settings(BaseSettings):
     # Common
     app_env: str = "development"
     frontend_url: str = "http://localhost:3000"
+    # Extra origins allowed by regex (e.g. per-branch Amplify/Vercel URLs).
+    # The default keeps the existing Vercel deployment working; AWS sets this
+    # to the Amplify app's domain. An empty string disables regex matching.
+    cors_origin_regex: str = (
+        r"^https://ic-tbuild-up-project(-[a-z0-9]+-laons-projects-[a-z0-9]+)?\.vercel\.app$"
+    )
 
     # Database
     database_url: str = "postgresql+psycopg://refind:refind@localhost:5432/refind"
