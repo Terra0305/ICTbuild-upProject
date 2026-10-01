@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     storage_bucket: str = ""
     storage_access_key: str = ""
     storage_secret_key: str = ""
+    storage_region: str = ""
+    # Public base URL that serves uploaded objects by key (e.g. a CloudFront
+    # distribution in front of a private bucket). When empty, image URLs fall
+    # back to the path-style ``endpoint/bucket/key`` form.
+    storage_public_base_url: str = ""
 
     # AI
     text_model_name: str = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"

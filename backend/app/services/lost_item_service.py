@@ -40,12 +40,35 @@ async def _read_upload_within_limit(file: UploadFile, max_bytes: int) -> bytes:
     return bytes(chunks)
 
 
+def _s3_client_kwargs(settings) -> dict[str, str]:
+    """Only pass explicitly configured values so that, on AWS, boto3 falls
+    back to its default credential chain (the EC2 instance role) instead of
+    receiving empty-string keys."""
+    kwargs = {
+        "endpoint_url": settings.storage_endpoint,
+        "region_name": settings.storage_region,
+        "aws_access_key_id": settings.storage_access_key,
+        "aws_secret_access_key": settings.storage_secret_key,
+    }
+    return {name: value for name, value in kwargs.items() if value}
+
+
+def _public_image_url(settings, key: str) -> str:
+    if settings.storage_public_base_url:
+        return f"{settings.storage_public_base_url.rstrip('/')}/{key}"
+    return f"{settings.storage_endpoint.rstrip('/')}/{settings.storage_bucket}/{key}"
+
+
 def _upload_image(file: UploadFile, content: bytes) -> str | None:
     """Upload to S3-compatible storage if configured; otherwise skip (no
     credentials available yet) so text-only matching still proceeds, matching
     the "이미지 URL 오류 -> 텍스트만 진행" fallback policy in spec §14."""
     settings = get_settings()
-    if not settings.storage_bucket or not settings.storage_endpoint:
+    # A bucket alone is not enough: without a public base URL or endpoint
+    # there is no URL the frontend could load the image from.
+    if not settings.storage_bucket or not (
+        settings.storage_public_base_url or settings.storage_endpoint
+    ):
         logger.info("Object storage not configured; skipping image upload")
         return None
 
@@ -53,16 +76,11 @@ def _upload_image(file: UploadFile, content: bytes) -> str | None:
     key = f"lost-items/{uuid.uuid4()}.{extension}"
 
     try:
-        client = boto3.client(
-            "s3",
-            endpoint_url=settings.storage_endpoint,
-            aws_access_key_id=settings.storage_access_key,
-            aws_secret_access_key=settings.storage_secret_key,
-        )
+        client = boto3.client("s3", **_s3_client_kwargs(settings))
         client.put_object(
             Bucket=settings.storage_bucket, Key=key, Body=content, ContentType=file.content_type
         )
-        return f"{settings.storage_endpoint.rstrip('/')}/{settings.storage_bucket}/{key}"
+        return _public_image_url(settings, key)
     except (BotoCoreError, ClientError):
         logger.exception("Image upload failed; continuing without image")
         return None
