@@ -5,6 +5,8 @@
 전체 기능 명세는 [REFIND_DEVELOPMENT_SPEC.md](./REFIND_DEVELOPMENT_SPEC.md)를 참고한다. 현재는 인증·분실물
 등록·LOST112 습득물 수집·텍스트 기반 매칭을 로컬에서 개발할 수 있다.
 
+운영 서비스 주소와 자동 배포 방식은 [docs/deploy.md](./docs/deploy.md)를 참고한다. `main`에 push하면 자동으로 배포된다.
+
 ## 구조
 
 ```text
