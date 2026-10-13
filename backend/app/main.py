@@ -1,3 +1,7 @@
+import logging
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -8,7 +12,25 @@ from app.core.logging import configure_logging
 settings = get_settings()
 configure_logging()
 
-app = FastAPI(title="ReFind API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    # Load the ONNX embedding model off the request path so the first lost-item
+    # registration does not pay the model-load cost.
+    threading.Thread(target=_warm_up_encoder, daemon=True).start()
+    yield
+
+
+def _warm_up_encoder() -> None:
+    try:
+        from app.ai.text_encoder import encode_text
+
+        encode_text("warm up")
+    except Exception:  # noqa: BLE001 - warm-up is best effort
+        logging.getLogger(__name__).warning("Text encoder warm-up failed", exc_info=True)
+
+
+app = FastAPI(title="ReFind API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,6 +42,8 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Cache preflights so each cross-origin JSON call skips an extra OPTIONS round trip.
+    max_age=600,
 )
 
 app.include_router(auth.router, prefix="/api/v1")

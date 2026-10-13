@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.ai.scorer import score_label
 from app.api.dependencies import get_current_user
 from app.db.session import get_db
-from app.models import LostItem, LostItemClosureReason, User
+from app.models import LostItem, LostItemClosureReason, LostItemStatus, User
 from app.schemas.schemas import (
     LostItemCloseRequest,
     LostItemCreateResponse,
@@ -81,9 +81,9 @@ async def create_lost_item(
         description=description,
         image=image,
     )
-    _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
-    notification_service.notify_matches(db, newly_qualified)
-    background_tasks.add_task(lost112_sync_service.backfill_lost_item_by_id, lost_item.id)
+    # Matching and LOST112 backfill run after the response so registration stays fast;
+    # the response already reports matching_status="PROCESSING".
+    background_tasks.add_task(lost112_sync_service.process_new_lost_item_by_id, lost_item.id)
 
     return LostItemCreateResponse(
         id=lost_item.id,
@@ -113,11 +113,17 @@ def get_lost_item(
 def update_lost_item(
     lost_item_id: uuid.UUID,
     data: LostItemUpdateRequest,
+    background_tasks: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> LostItem:
     lost_item = lost_item_service.get_owned_lost_item(db, user, lost_item_id)
-    return lost_item_service.update_lost_item(db, lost_item, **data.model_dump(exclude_unset=True))
+    updated = lost_item_service.update_lost_item(
+        db, lost_item, **data.model_dump(exclude_unset=True)
+    )
+    # Edited text/place changes the scores, so refresh matches without blocking the response.
+    background_tasks.add_task(lost112_sync_service.rematch_lost_item_by_id, updated.id)
+    return updated
 
 
 @router.post("/{lost_item_id}/close", response_model=LostItemResponse)
@@ -151,6 +157,8 @@ def rematch_lost_item(
     db: Session = Depends(get_db),
 ) -> list[LostItem]:
     lost_item = lost_item_service.get_owned_lost_item(db, user, lost_item_id)
+    if lost_item.status != LostItemStatus.ACTIVE:
+        raise HTTPException(status.HTTP_409_CONFLICT, "종료된 분실물은 다시 매칭할 수 없습니다.")
     _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
     notification_service.notify_matches(db, newly_qualified)
     return [lost_item]

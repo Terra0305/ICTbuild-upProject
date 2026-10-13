@@ -1,8 +1,8 @@
 from datetime import timedelta
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, defer
 
-from app.ai import scorer
+from app.ai import geo, scorer
 from app.core.config import get_settings
 from app.models import FoundItem, LostItem, LostItemStatus, Match
 
@@ -10,22 +10,58 @@ CANDIDATE_WINDOW_DAYS = 180
 EARLY_FOUND_GRACE_DAYS = 2
 
 
+def _found_region(found_item: FoundItem) -> str:
+    return found_item.region_code or geo.region_from_text(
+        found_item.storage_place, found_item.place_text
+    )
+
+
+def _lost_coordinates(lost_item: LostItem) -> tuple[float, float] | None:
+    return geo.coordinates_from_text(lost_item.place_text)
+
+
+def _distance_km(lost_item: LostItem, found_item: FoundItem) -> float | None:
+    lost_xy = _lost_coordinates(lost_item)
+    found_xy = geo.coordinates_from_text(found_item.storage_place, found_item.place_text)
+    if lost_xy is None or found_xy is None:
+        return None
+    return geo.distance_km(lost_xy, found_xy)
+
+
+def _is_plausible(lost_item: LostItem, found_item: FoundItem) -> bool:
+    """Hard filters: category, date window, and location.
+
+    A lost report in 광주 must only surface items kept in 광주; when both sides
+    resolve to known coordinates (e.g. 조선대 vs a police station), they must
+    also be within MAX_CANDIDATE_DISTANCE_KM.
+    """
+    if (
+        lost_item.category_code
+        and found_item.category_code
+        and lost_item.category_code != found_item.category_code
+    ):
+        return False
+    earliest = lost_item.lost_date - timedelta(days=EARLY_FOUND_GRACE_DAYS)
+    latest = lost_item.lost_date + timedelta(days=CANDIDATE_WINDOW_DAYS)
+    if not (earliest <= found_item.found_date <= latest):
+        return False
+    if lost_item.region_code and _found_region(found_item) != lost_item.region_code:
+        return False
+    distance = _distance_km(lost_item, found_item)
+    return distance is None or distance <= geo.MAX_CANDIDATE_DISTANCE_KM
+
+
 def _candidate_found_items(db: Session, lost_item: LostItem) -> list[FoundItem]:
     earliest = lost_item.lost_date - timedelta(days=EARLY_FOUND_GRACE_DAYS)
     latest = lost_item.lost_date + timedelta(days=CANDIDATE_WINDOW_DAYS)
-    query = db.query(FoundItem).filter(
-        FoundItem.found_date >= earliest, FoundItem.found_date <= latest
+    query = (
+        db.query(FoundItem)
+        .options(defer(FoundItem.raw_payload))
+        .filter(FoundItem.found_date >= earliest, FoundItem.found_date <= latest)
     )
-    candidates = []
-    for found_item in query.all():
-        if (
-            lost_item.category_code
-            and found_item.category_code
-            and lost_item.category_code != found_item.category_code
-        ):
-            continue
-        candidates.append(found_item)
-    return candidates
+    if lost_item.category_code:
+        query = query.filter(FoundItem.category_code == lost_item.category_code)
+    return [item for item in query.all() if _is_plausible(lost_item, item)]
 
 
 def _score_pair(lost_item: LostItem, found_item: FoundItem) -> dict[str, float | None]:
@@ -41,9 +77,36 @@ def _score_pair(lost_item: LostItem, found_item: FoundItem) -> dict[str, float |
         "image": None,
         "category": scorer.category_score(lost_item.category_code, found_item.category_code),
         "color": scorer.color_score(lost_item.color_codes or [], found_item.color_codes or []),
-        "location": scorer.location_score(lost_item.region_code, found_item.region_code),
+        "location": scorer.location_score(
+            lost_item.region_code, _found_region(found_item), _distance_km(lost_item, found_item)
+        ),
         "date": scorer.date_score(lost_item.lost_date, found_item.found_date),
     }
+
+
+def _upsert_match(
+    db: Session,
+    lost_item: LostItem,
+    found_item: FoundItem,
+    existing: Match | None,
+    threshold: float,
+) -> tuple[Match, bool]:
+    scores = _score_pair(lost_item, found_item)
+    final_score = scorer.compute_final_score(scores)
+    was_below_threshold = existing is None or existing.final_score < threshold
+    match = existing
+    if match is None:
+        match = Match(lost_item_id=lost_item.id, found_item_id=found_item.id)
+        db.add(match)
+    match.text_score = scores["text"]
+    match.image_score = scores["image"]
+    match.category_score = scores["category"]
+    match.color_score = scores["color"]
+    match.location_score = scores["location"]
+    match.date_score = scores["date"]
+    match.final_score = final_score
+    match.reason_codes = scorer.build_reasons(scores)
+    return match, was_below_threshold and final_score >= threshold
 
 
 def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> tuple[list[Match], list[Match]]:
@@ -52,32 +115,23 @@ def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> tuple[list[M
     matches: list[Match] = []
     newly_qualified: list[Match] = []
 
-    for found_item in _candidate_found_items(db, lost_item):
-        scores = _score_pair(lost_item, found_item)
-        final_score = scorer.compute_final_score(scores)
-        reasons = scorer.build_reasons(scores)
+    candidates = _candidate_found_items(db, lost_item)
+    existing_by_found = {
+        m.found_item_id: m for m in db.query(Match).filter(Match.lost_item_id == lost_item.id)
+    }
+    # Matches that no longer pass the location rules are zeroed (not deleted:
+    # notifications reference them) so they drop below the display threshold.
+    candidate_ids = {item.id for item in candidates}
+    for found_id, stale in existing_by_found.items():
+        if found_id not in candidate_ids:
+            stale.final_score = 0
 
-        match = (
-            db.query(Match)
-            .filter(Match.lost_item_id == lost_item.id, Match.found_item_id == found_item.id)
-            .first()
+    for found_item in candidates:
+        match, newly = _upsert_match(
+            db, lost_item, found_item, existing_by_found.get(found_item.id), threshold
         )
-        was_below_threshold = match is None or match.final_score < threshold
-        if match is None:
-            match = Match(lost_item_id=lost_item.id, found_item_id=found_item.id)
-            db.add(match)
-
-        match.text_score = scores["text"]
-        match.image_score = scores["image"]
-        match.category_score = scores["category"]
-        match.color_score = scores["color"]
-        match.location_score = scores["location"]
-        match.date_score = scores["date"]
-        match.final_score = final_score
-        match.reason_codes = reasons
         matches.append(match)
-
-        if was_below_threshold and final_score >= threshold:
+        if newly:
             newly_qualified.append(match)
 
     db.commit()
@@ -103,41 +157,15 @@ def rematch_new_found_item(db: Session, found_item: FoundItem) -> list[Match]:
 
     active_lost_items = db.query(LostItem).filter(LostItem.status == LostItemStatus.ACTIVE).all()
     for lost_item in active_lost_items:
-        if (
-            lost_item.category_code
-            and found_item.category_code
-            and lost_item.category_code != found_item.category_code
-        ):
+        if not _is_plausible(lost_item, found_item):
             continue
-        earliest = lost_item.lost_date - timedelta(days=EARLY_FOUND_GRACE_DAYS)
-        latest = lost_item.lost_date + timedelta(days=CANDIDATE_WINDOW_DAYS)
-        if not (earliest <= found_item.found_date <= latest):
-            continue
-
-        scores = _score_pair(lost_item, found_item)
-        final_score = scorer.compute_final_score(scores)
-        reasons = scorer.build_reasons(scores)
-
-        match = (
+        existing = (
             db.query(Match)
             .filter(Match.lost_item_id == lost_item.id, Match.found_item_id == found_item.id)
             .first()
         )
-        was_below_threshold = match is None or match.final_score < threshold
-        if match is None:
-            match = Match(lost_item_id=lost_item.id, found_item_id=found_item.id)
-            db.add(match)
-
-        match.text_score = scores["text"]
-        match.image_score = scores["image"]
-        match.category_score = scores["category"]
-        match.color_score = scores["color"]
-        match.location_score = scores["location"]
-        match.date_score = scores["date"]
-        match.final_score = final_score
-        match.reason_codes = reasons
-
-        if was_below_threshold and final_score >= threshold:
+        match, newly = _upsert_match(db, lost_item, found_item, existing, threshold)
+        if newly:
             newly_qualified.append(match)
 
     db.commit()

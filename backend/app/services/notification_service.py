@@ -54,6 +54,11 @@ def notify_matches(db: Session, matches: list[Match]) -> list[Notification]:
         db.add(in_app)
         created.append(in_app)
 
+        if not get_settings().smtp_host:
+            # No mail transport: don't surface a permanently FAILED "email" to the user.
+            match.notified_at = datetime.now(UTC)
+            continue
+
         email_notification = Notification(
             user_id=lost_item.user_id,
             lost_item_id=lost_item.id,

@@ -1,17 +1,20 @@
 """Bounded LOST112 ingestion for initial backfill and incremental sync."""
 
+import logging
 from datetime import UTC, date, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
+from app.ai import geo
 from app.db.session import SessionLocal
-from app.models import FoundItem, FoundItemStatus, LostItem, SyncRun, SyncRunStatus
+from app.models import FoundItem, FoundItemStatus, LostItem, LostItemStatus, SyncRun, SyncRunStatus
 from app.providers.lost112 import FoundItemDTO, Lost112Provider
 from app.services import found_item_service, matching_service, notification_service
 
 INITIAL_BACKFILL_DAYS = 30
 MAX_MATCH_DAYS = 180
 SOURCE = "LOST112"
+logger = logging.getLogger(__name__)
 
 
 def _category_code(category_raw: str) -> str:
@@ -77,9 +80,8 @@ def _save_dto(db: Session, dto: FoundItemDTO) -> tuple[FoundItem, bool]:
         category_code=_category_code(dto.category_raw),
         color_codes=_color_codes(dto.color_raw),
         found_date=dto.found_date,
-        # LOST112's search response does not reliably provide a normalised region code.
-        # An empty value is intentionally excluded from location-based scoring.
-        region_code="",
+        # LOST112 gives no region code; derive the 시·도 from the storage place text.
+        region_code=geo.region_from_text(dto.storage_place),
         storage_place=dto.storage_place,
         description=dto.description,
         image_url=dto.image_url,
@@ -151,12 +153,38 @@ def backfill_lost_item(db: Session, lost_item: LostItem) -> int:
     return upserted
 
 
-def backfill_lost_item_by_id(lost_item_id) -> None:
-    """Background-task entrypoint; it owns a separate SQLAlchemy session."""
+def process_new_lost_item_by_id(lost_item_id) -> None:
+    """Background-task entrypoint; it owns a separate SQLAlchemy session.
+
+    Matches against already-collected found items first so results appear fast,
+    then pulls fresh LOST112 data and matches again.
+    """
     db = SessionLocal()
     try:
         lost_item = db.get(LostItem, lost_item_id)
-        if lost_item is not None:
+        if lost_item is None:
+            return
+        _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
+        notification_service.notify_matches(db, newly_qualified)
+        try:
             backfill_lost_item(db, lost_item)
+        except Exception:
+            logger.exception("LOST112 backfill failed for lost item %s", lost_item_id)
     finally:
         db.close()
+
+
+def rematch_lost_item_by_id(lost_item_id) -> None:
+    """Re-run matching only (no LOST112 fetch) after a lost item was edited."""
+    db = SessionLocal()
+    try:
+        lost_item = db.get(LostItem, lost_item_id)
+        if lost_item is None or lost_item.status != LostItemStatus.ACTIVE:
+            return
+        _, newly_qualified = matching_service.run_matching_for_lost_item(db, lost_item)
+        notification_service.notify_matches(db, newly_qualified)
+    finally:
+        db.close()
+
+
+backfill_lost_item_by_id = process_new_lost_item_by_id

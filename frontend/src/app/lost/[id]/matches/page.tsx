@@ -33,7 +33,7 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
       {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
       {matches === null && !error && <p className="mt-6 text-sm text-zinc-500">불러오는 중...</p>}
       {matches?.length === 0 && (
-        <p className="mt-6 text-sm text-zinc-500">아직 조건에 맞는 습득물이 없습니다.</p>
+        <p className="mt-6 text-sm text-zinc-500">같은 지역에서 조건에 맞는 습득물을 찾는 중이거나 아직 없습니다. 잠시 후 다시 확인해주세요.</p>
       )}
 
       <ul className="mt-6 flex flex-col gap-4">

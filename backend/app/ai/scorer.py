@@ -55,10 +55,20 @@ def color_score(lost_colors: list[str], found_colors: list[str]) -> float | None
     return len(lost_set & found_set) / len(union)
 
 
-def location_score(lost_region_code: str, found_region_code: str) -> float | None:
+def location_score(
+    lost_region_code: str, found_region_code: str, distance_km: float | None = None
+) -> float | None:
+    """Proximity beats region: a known distance (<=1km ~ same campus/neighbourhood)
+    is a much stronger signal than merely sharing a province."""
+    if distance_km is not None:
+        if distance_km <= 1.0:
+            return 1.0
+        if distance_km <= 3.0:
+            return 0.85
+        return 0.6
     if not lost_region_code or not found_region_code:
         return None
-    return 1.0 if lost_region_code == found_region_code else 0.20
+    return 0.7 if lost_region_code == found_region_code else 0.0
 
 
 def date_score(lost_date: date, found_date: date) -> float | None:
