@@ -66,11 +66,6 @@ _LANDMARKS: dict[str, tuple[float, float, str]] = {
     "광주남부경찰서": (35.1330, 126.9020, "29"),
     "광주북부경찰서": (35.1740, 126.9120, "29"),
     "광주광산경찰서": (35.1393, 126.7937, "29"),
-    "동부경찰서": (35.1465, 126.9239, "29"),
-    "서부경찰서": (35.1520, 126.8890, "29"),
-    "남부경찰서": (35.1330, 126.9020, "29"),
-    "북부경찰서": (35.1740, 126.9120, "29"),
-    "광산경찰서": (35.1393, 126.7937, "29"),
 }
 
 # Beyond this distance a pair with known coordinates is not a plausible match.
@@ -78,15 +73,28 @@ MAX_CANDIDATE_DISTANCE_KM = 5.0
 
 
 def region_from_text(*texts: str | None) -> str:
-    """Best-effort 시·도 code from free text; empty string when unknown."""
+    """Best-effort 시·도 code from free text; empty string when unknown.
+
+    Explicit region names win; landmarks are only a fallback so that a generic
+    suffix can never override the city (e.g. "제주동부경찰서" is not 광주).
+    """
     for text in texts:
         if not text:
             continue
         compact = text.replace(" ", "")
-        for keyword in _LANDMARKS:
-            if keyword in compact:
-                return _LANDMARKS[keyword][2]
-        for keyword, code in _REGION_KEYWORDS:
+        # The earliest mention wins ("경기도광주" is 경기, not 광주); ties go to the longer name.
+        hits = [
+            (compact.index(keyword), -len(keyword), code)
+            for keyword, code in _REGION_KEYWORDS
+            if keyword in compact
+        ]
+        if hits:
+            return min(hits)[2]
+    for text in texts:
+        if not text:
+            continue
+        compact = text.replace(" ", "")
+        for keyword, (_, _, code) in _LANDMARKS.items():
             if keyword in compact:
                 return code
     return ""

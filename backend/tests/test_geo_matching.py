@@ -84,3 +84,21 @@ def test_get_top_matches_hides_stale_out_of_region_rows():
 
     result = matching_service.get_top_matches(_Db(), lost.id)
     assert result == [good[0]]
+
+
+def test_generic_station_names_do_not_resolve_to_gwangju():
+    for name in ("제주동부경찰서", "대전서부경찰서", "부산남부경찰서", "서울북부경찰서"):
+        assert geo.region_from_text(name) != "29", name
+        assert geo.coordinates_from_text(name) is None, name
+    assert geo.region_from_text("제주동부경찰서") == "50"
+    assert geo.region_from_text("대전서부경찰서") == "30"
+    assert geo.region_from_text("부산남부경찰서") == "26"
+    lost = _lost(place="조선대학교")
+    for name in ("제주동부경찰서", "대전서부경찰서", "부산남부경찰서"):
+        assert not matching_service._is_plausible(lost, _found(name))
+
+
+def test_earliest_region_mention_wins():
+    assert geo.region_from_text("경기도광주경찰서") == "41"
+    assert geo.region_from_text("광주광역시 동구") == "29"
+    assert geo.region_from_text("전라남도 광주") == "46"
