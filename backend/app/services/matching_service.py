@@ -139,14 +139,24 @@ def run_matching_for_lost_item(db: Session, lost_item: LostItem) -> tuple[list[M
 
 
 def get_top_matches(db: Session, lost_item_id, limit: int = 5) -> list[Match]:
+    """Top matches that still satisfy the current plausibility rules.
+
+    Stored matches can predate the region/distance filter (or a later edit), so
+    the rules are re-applied at read time instead of trusting stale rows.
+    """
+    lost_item = db.get(LostItem, lost_item_id)
+    if lost_item is None:
+        return []
     threshold = get_settings().match_display_threshold
-    return (
-        db.query(Match)
+    rows = (
+        db.query(Match, FoundItem)
+        .join(FoundItem, FoundItem.id == Match.found_item_id)
+        .options(defer(FoundItem.raw_payload))
         .filter(Match.lost_item_id == lost_item_id, Match.final_score >= threshold)
         .order_by(Match.final_score.desc())
-        .limit(limit)
         .all()
     )
+    return [m for m, found in rows if _is_plausible(lost_item, found)][:limit]
 
 
 def rematch_new_found_item(db: Session, found_item: FoundItem) -> list[Match]:

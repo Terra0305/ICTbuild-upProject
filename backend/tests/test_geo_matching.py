@@ -49,3 +49,38 @@ def test_location_score_prefers_proximity():
     assert scorer.location_score("29", "29") == 0.7
     assert scorer.location_score("29", "11") == 0.0
     assert scorer.location_score("29", "") is None
+
+
+def test_get_top_matches_hides_stale_out_of_region_rows():
+    from uuid import uuid4
+
+    lost = _lost(place="조선대학교")
+    lost.id = uuid4()
+    good = (SimpleNamespace(final_score=0.6), _found("광주동부경찰서"))
+    stale = (SimpleNamespace(final_score=0.9), _found("대전둔산경찰서"))
+
+    class _Query:
+        def join(self, *_a, **_k):
+            return self
+
+        def options(self, *_a, **_k):
+            return self
+
+        def filter(self, *_a, **_k):
+            return self
+
+        def order_by(self, *_a, **_k):
+            return self
+
+        def all(self):
+            return [stale, good]
+
+    class _Db:
+        def get(self, *_a):
+            return lost
+
+        def query(self, *_a):
+            return _Query()
+
+    result = matching_service.get_top_matches(_Db(), lost.id)
+    assert result == [good[0]]
