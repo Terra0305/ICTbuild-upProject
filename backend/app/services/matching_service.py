@@ -11,9 +11,14 @@ EARLY_FOUND_GRACE_DAYS = 2
 
 
 def _found_region(found_item: FoundItem) -> str:
-    return found_item.region_code or geo.region_from_text(
-        found_item.storage_place, found_item.place_text
+    """The text is the source of truth; the stored code can predate geo fixes."""
+    return geo.region_from_text(found_item.storage_place, found_item.place_text) or (
+        found_item.region_code or ""
     )
+
+
+def _lost_region(lost_item: LostItem) -> str:
+    return lost_item.region_code or geo.region_from_text(lost_item.place_text)
 
 
 def _lost_coordinates(lost_item: LostItem) -> tuple[float, float] | None:
@@ -45,7 +50,8 @@ def _is_plausible(lost_item: LostItem, found_item: FoundItem) -> bool:
     latest = lost_item.lost_date + timedelta(days=CANDIDATE_WINDOW_DAYS)
     if not (earliest <= found_item.found_date <= latest):
         return False
-    if lost_item.region_code and _found_region(found_item) != lost_item.region_code:
+    lost_region = _lost_region(lost_item)
+    if lost_region and _found_region(found_item) != lost_region:
         return False
     distance = _distance_km(lost_item, found_item)
     return distance is None or distance <= geo.MAX_CANDIDATE_DISTANCE_KM
@@ -78,7 +84,7 @@ def _score_pair(lost_item: LostItem, found_item: FoundItem) -> dict[str, float |
         "category": scorer.category_score(lost_item.category_code, found_item.category_code),
         "color": scorer.color_score(lost_item.color_codes or [], found_item.color_codes or []),
         "location": scorer.location_score(
-            lost_item.region_code, _found_region(found_item), _distance_km(lost_item, found_item)
+            _lost_region(lost_item), _found_region(found_item), _distance_km(lost_item, found_item)
         ),
         "date": scorer.date_score(lost_item.lost_date, found_item.found_date),
     }

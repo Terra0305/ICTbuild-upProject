@@ -102,3 +102,16 @@ def test_earliest_region_mention_wins():
     assert geo.region_from_text("경기도광주경찰서") == "41"
     assert geo.region_from_text("광주광역시 동구") == "29"
     assert geo.region_from_text("전라남도 광주") == "46"
+
+
+def test_stale_stored_region_does_not_leak_other_city():
+    # Rows ingested before the region fix may carry a wrong stored code.
+    lost = _lost(place="조선대학교")
+    assert not matching_service._is_plausible(lost, _found("대전둔산경찰서", region="29"))
+    assert matching_service._is_plausible(lost, _found("광주동부경찰서", region="11"))
+
+
+def test_lost_region_falls_back_to_place_text():
+    lost = _lost(region="", place="광주 충장로")
+    assert not matching_service._is_plausible(lost, _found("대전둔산경찰서"))
+    assert matching_service._is_plausible(lost, _found("광주동부경찰서"))
