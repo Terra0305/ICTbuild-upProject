@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 
+import { NotificationProvider } from "@/components/common/NotificationProvider";
 import { ScrollEffects } from "@/components/common/ScrollEffects";
 import { SiteHeader } from "@/components/common/SiteHeader";
 
@@ -37,9 +38,11 @@ export default function RootLayout({
   return (
     <html lang="ko" className={`${notoKr.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
-        <ScrollEffects />
-        <SiteHeader />
-        {children}
+        <NotificationProvider>
+          <ScrollEffects />
+          <SiteHeader />
+          {children}
+        </NotificationProvider>
       </body>
     </html>
   );

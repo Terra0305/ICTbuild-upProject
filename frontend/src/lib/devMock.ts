@@ -131,7 +131,9 @@ function load(): Store {
   } catch {
     /* fall through to seed */
   }
-  return seed();
+  const fresh = seed();
+  save(fresh);
+  return fresh;
 }
 
 function save(store: Store) {
@@ -169,10 +171,10 @@ function foundRaw(index: number) {
   };
 }
 
-function matchesFor(lostId: string) {
+function matchesFor(lostId: string, store: Store) {
   const reasonsBy = (i: number) =>
     i < 2 ? ["종류 일치", "색상 일치", "같은 지역", "설명 유사"] : i < 4 ? ["종류 일치", "같은 지역"] : ["같은 지역"];
-  return {
+  const base = {
     items: FOUND.map((f, i) => ({
       match_id: `dev-match-${lostId}-${i + 1}`,
       score: f[6],
@@ -189,6 +191,14 @@ function matchesFor(lostId: string) {
       found_item: foundRaw(i),
     })),
   };
+  // 개발용으로 생성된 알림의 매칭도 조회되도록 추가한다.
+  store.notifications
+    .filter((n) => n.lost_item_id === lostId && !base.items.some((m) => m.match_id === n.match_id))
+    .forEach((n, k) => {
+      const template = base.items[k % 3];
+      base.items.push({ ...template, match_id: n.match_id });
+    });
+  return base;
 }
 
 export class DevMockMiss extends Error {}
@@ -251,7 +261,7 @@ export async function devMockFetch(path: string, method: string, body: unknown):
   }
 
   if ((m = path.match(/^\/lost-items\/([^/]+)\/matches$/))) {
-    return matchesFor(m[1]);
+    return matchesFor(m[1], store);
   }
 
   if ((m = path.match(/^\/found-items\/dev-found-(\d)$/))) {
@@ -261,6 +271,24 @@ export async function devMockFetch(path: string, method: string, body: unknown):
   }
 
   if (path === "/notifications" && method === "GET") {
+    // 개발용: 20초마다 새 알림이 도착한 것처럼 만들어 토스트를 확인할 수 있게 한다.
+    const newest = store.notifications.reduce((t, n) => Math.max(t, Date.parse(n.created_at)), 0);
+    const active = store.lost.filter((i) => i.status === "ACTIVE");
+    if (active.length > 0 && Date.now() - newest > 20_000) {
+      const target = active[Math.floor(Math.random() * active.length)];
+      const now = new Date().toISOString();
+      store.notifications.unshift({
+        id: `dev-noti-${Date.now()}`,
+        lost_item_id: target.id,
+        match_id: `dev-match-${target.id}-${1 + Math.floor(Math.random() * 3)}-${Date.now()}`,
+        channel: "IN_APP",
+        status: "SENT",
+        sent_at: now,
+        read_at: null,
+        created_at: now,
+      });
+      save(store);
+    }
     return store.notifications;
   }
 

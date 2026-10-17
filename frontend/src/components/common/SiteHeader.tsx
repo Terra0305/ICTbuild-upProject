@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { IconBell, IconList, IconLogout, IconPlus, LogoMark } from "@/components/common/Icons";
-import { listNotifications } from "@/lib/api";
+import { useNotifications } from "@/components/common/NotificationProvider";
 import { clearTokens, isAuthenticated, subscribeAuthChange } from "@/lib/auth";
 
 function getServerSnapshot() {
@@ -16,26 +16,10 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const authed = useSyncExternalStore(subscribeAuthChange, isAuthenticated, getServerSnapshot);
-  const [unread, setUnread] = useState(0);
-
-  useEffect(() => {
-    if (!authed) return;
-    let cancelled = false;
-    listNotifications()
-      .then((items) => {
-        if (!cancelled) setUnread(items.filter((n) => n.status !== "READ").length);
-      })
-      .catch(() => {
-        if (!cancelled) setUnread(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [authed, pathname]);
+  const { unread } = useNotifications();
 
   function handleLogout() {
     clearTokens();
-    setUnread(0);
     router.push("/");
   }
 
