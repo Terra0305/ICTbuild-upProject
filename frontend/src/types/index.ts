@@ -41,7 +41,6 @@ export interface FoundItem {
   contactText?: string;
   description?: string;
   imageUrl?: string;
-  detailUrl?: string;
   status: FoundItemStatus;
 }
 

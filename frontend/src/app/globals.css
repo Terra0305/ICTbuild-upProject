@@ -1,26 +1,357 @@
 @import "tailwindcss";
 
+/* ReFind — claim-tag world. Tokens first; components read these, never raw hex. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* iOS grouped-background system, monochrome. */
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #eeeef0;
+  --ink: #000000;
+  --ink-2: #636366;
+  --line: rgb(60 60 67 / 0.18);
+  --brand: #000000;
+  --brand-strong: #000000;
+  --brand-ink: #ffffff;
+  --brand-soft: #e9e9ed;
+  --shell: rgb(249 249 249 / 0.82);
+  --shell-ink: #000000;
+  --shell-ink-2: #636366;
+  --tag: #000000;
+  --tag-ink: #ffffff;
+  --ok: #1d7a36;
+  --ok-soft: #e1f4e6;
+  --warn: #9a5a00;
+  --warn-soft: #fff0d6;
+  --danger: #d70015;
+  --danger-soft: #ffe5e8;
+  --shadow: 0 0.5px 1px rgb(0 0 0 / 0.04), 0 4px 16px -6px rgb(0 0 0 / 0.08);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --surface-2: #2c2c2e;
+    --ink: #ffffff;
+    --ink-2: #a1a1a6;
+    --line: rgb(84 84 88 / 0.5);
+    --brand: #ffffff;
+    --brand-strong: #ffffff;
+    --brand-ink: #000000;
+    --brand-soft: #2c2c2e;
+    --shell: rgb(22 22 24 / 0.8);
+    --shell-ink: #ffffff;
+    --shell-ink-2: #a1a1a6;
+    --tag: #ffffff;
+    --tag-ink: #000000;
+    --ok: #30d158;
+    --ok-soft: #12301b;
+    --warn: #ffb340;
+    --warn-soft: #3a2a08;
+    --danger: #ff6b7a;
+    --danger-soft: #3d1217;
+    --shadow: 0 0.5px 1px rgb(0 0 0 / 0.5);
   }
 }
 
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-shell: var(--shell);
+  --color-shell-ink: var(--shell-ink);
+  --color-shell-ink-2: var(--shell-ink-2);
+  --color-tag: var(--tag);
+  --color-tag-ink: var(--tag-ink);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", var(--font-noto-kr), system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", var(--font-geist-mono), monospace;
+  --shadow-card: var(--shadow);
+}
+
+html {
+  background: var(--bg);
+  scrollbar-color: var(--line) transparent;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  -webkit-text-size-adjust: 100%;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+::selection {
+  background: var(--tag);
+  color: var(--tag-ink);
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--ink) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+input,
+select,
+textarea {
+  color: var(--ink);
+  caret-color: var(--brand);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--ink-2);
+  opacity: 0.7;
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Hairline separators (iOS-style). */
+.perf {
+  background: var(--line);
+}
+.perf-x {
+  background: var(--line);
+}
+
+/* One authored moment: tags are "printed" in, once. */
+@keyframes print-in {
+  from {
+    clip-path: inset(0 0 100% 0);
+    transform: translateY(-6px);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+    transform: none;
+  }
+}
+.print-in {
+  animation: print-in 640ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.fade-up {
+  animation: fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 8px;
+}
+
+/* Scroll reveal: content is visible by default; JS arms it only for off-screen blocks. */
+.reveal[data-armed="true"] {
+  opacity: 0;
+  transform: translateY(18px);
+}
+.reveal {
+  transition:
+    opacity 600ms cubic-bezier(0.32, 0.72, 0, 1),
+    transform 600ms cubic-bezier(0.32, 0.72, 0, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal[data-armed="true"][data-shown="true"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hero headline: lines rise in one after another. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.rise {
+  animation: rise 700ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Score meters fill from the left. */
+@keyframes grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.grow-x {
+  transform-origin: left;
+  animation: grow-x 900ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+/* Success checkmark draws itself. */
+@keyframes draw {
+  from {
+    stroke-dashoffset: 30;
+  }
+}
+.draw path {
+  stroke-dasharray: 30;
+  animation: draw 600ms 250ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+}
+.pop {
+  animation: pop 450ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Logo tilts like a swinging tag on hover. */
+.logo-mark {
+  transform-origin: 20% 50%;
+  transition: transform 450ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+a:hover > .logo-mark {
+  transform: rotate(-14deg);
+}
+
+/* Bell rings once when there are unread notifications. */
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(14deg); }
+  40% { transform: rotate(-12deg); }
+  60% { transform: rotate(8deg); }
+  80% { transform: rotate(-4deg); }
+}
+.bell-ring {
+  transform-origin: 50% 10%;
+  animation: bell-ring 900ms 600ms ease-in-out both;
+}
+
+/* Landing: sections behave like full-screen panels the page snaps between. */
+html:has(.snap-page) {
+  scroll-snap-type: y proximity;
+  scroll-padding-top: 3.5rem;
+}
+.snap-section {
+  scroll-snap-align: start;
+  min-height: min(calc(100svh - 3.5rem), 50rem);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+.pop-in {
+  animation: pop-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Category marquee */
+.marquee {
+  overflow: hidden;
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 0.5rem;
+  padding-right: 0.5rem;
+  animation: marquee 50s linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ---- Scroll-linked motion (vars set by ScrollEffects) ---- */
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 60;
+  height: 2px;
+  background: var(--ink);
+  transform-origin: left;
+  transform: scaleX(var(--progress, 0));
+  pointer-events: none;
+}
+
+.site-header {
+  transition: box-shadow 300ms ease;
+}
+html[data-scrolled="true"] .site-header {
+  box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.35);
+}
+
+.hero-copy {
+  transform: translateY(calc(var(--scroll, 0) * 0.14px));
+  opacity: clamp(0, calc(1 - var(--scroll, 0) / 560), 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .hero-copy,
+  .scroll-progress {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .scroll-progress {
+    display: none;
+  }
+  .marquee-track {
+    animation: none;
+  }
+  .marquee {
+    overflow-x: auto;
+  }
 }

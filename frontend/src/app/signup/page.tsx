@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { login, signup } from "@/lib/api";
-import { ApiError } from "@/lib/api";
+import { AuthShell } from "@/components/common/AuthShell";
+import { Button, Field, Notice, fieldClass } from "@/components/common/ui";
+import { ApiError, login, signup } from "@/lib/api";
 import { setTokens } from "@/lib/auth";
+import { DEV_MOCK_TOKEN, IS_DEV } from "@/lib/devFlags";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -26,8 +28,13 @@ export default function SignupPage() {
       setTokens(tokens.access_token, tokens.refresh_token);
       router.push("/lost");
     } catch (err) {
+      if (IS_DEV && !(err instanceof ApiError)) {
+        setTokens(DEV_MOCK_TOKEN, DEV_MOCK_TOKEN);
+        router.push("/lost");
+        return;
+      }
       if (err instanceof ApiError && err.status === 409) {
-        setError("이미 가입된 이메일입니다.");
+        setError("이미 가입된 이메일입니다. 로그인해주세요.");
       } else {
         setError("회원가입에 실패했습니다. 비밀번호는 8자 이상이어야 합니다.");
       }
@@ -37,49 +44,62 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-6 py-16">
-      <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">회원가입</h1>
-      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
-        <input
-          required
-          placeholder="이름"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={50}
-          className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <input
-          type="email"
-          required
-          placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <input
-          type="password"
-          required
-          minLength={8}
-          placeholder="비밀번호 (8자 이상)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="mt-2 rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-        >
+    <AuthShell
+      title="1분이면 시작할 수 있어요"
+      description="가입하면 분실물을 등록하고 추천 후보와 알림을 받아볼 수 있어요."
+      footer={
+        <>
+          이미 계정이 있으신가요?{" "}
+          <Link href="/login" className="font-bold text-ink underline underline-offset-4">
+            로그인
+          </Link>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <Field label="이름" htmlFor="name">
+          <input
+            id="name"
+            required
+            autoComplete="name"
+            placeholder="홍길동"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={50}
+            className={fieldClass}
+          />
+        </Field>
+        <Field label="이메일" htmlFor="email" hint="알림을 받을 주소예요">
+          <input
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            inputMode="email"
+            placeholder="example@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={fieldClass}
+          />
+        </Field>
+        <Field label="비밀번호" htmlFor="password" hint="8자 이상">
+          <input
+            id="password"
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            placeholder="8자 이상 입력"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={fieldClass}
+          />
+        </Field>
+        {error && <Notice tone="error">{error}</Notice>}
+        <Button type="submit" disabled={submitting} className="mt-1 min-h-12">
           {submitting ? "가입 중..." : "회원가입"}
-        </button>
+        </Button>
       </form>
-      <p className="mt-6 text-sm text-zinc-600 dark:text-zinc-400">
-        이미 계정이 있으신가요?{" "}
-        <Link href="/login" className="font-medium text-black underline dark:text-white">
-          로그인
-        </Link>
-      </p>
-    </div>
+    </AuthShell>
   );
 }

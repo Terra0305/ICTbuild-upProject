@@ -1,4 +1,5 @@
 import { getAccessToken } from "@/lib/auth";
+import { DEV_MOCK_TOKEN } from "@/lib/devFlags";
 import type {
   FoundItem,
   LostItem,
@@ -28,6 +29,18 @@ interface RequestOptions extends Omit<RequestInit, "body"> {
 
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { body, auth = true, headers, ...rest } = options;
+
+  // 로컬 개발 전용: 목 토큰으로 로그인했다면 백엔드 없이 응답한다. 프로덕션 번들에서는 통째로 제거된다.
+  if (process.env.NODE_ENV === "development" && getAccessToken() === DEV_MOCK_TOKEN) {
+    const { devMockFetch, DevMockMiss } = await import("@/lib/devMock");
+    try {
+      return (await devMockFetch(path, (rest.method ?? "GET").toUpperCase(), body)) as T;
+    } catch (err) {
+      if (err instanceof DevMockMiss) throw new ApiError(404, null);
+      throw err;
+    }
+  }
+
   const isFormData = body instanceof FormData;
 
   const finalHeaders: HeadersInit = {
@@ -170,7 +183,6 @@ interface FoundItemResponseRaw {
   contact_text: string | null;
   description: string | null;
   image_url: string | null;
-  detail_url: string | null;
   status: "STORED" | "RETURNED" | "DISPOSED" | "UNKNOWN";
 }
 
@@ -204,10 +216,6 @@ function mapFoundItem(raw: FoundItemResponseRaw): FoundItem {
     contactText: raw.contact_text ?? undefined,
     description: raw.description ?? undefined,
     imageUrl: raw.image_url ?? undefined,
-    // Older collected rows used LOST112's retired mobile subdomain.
-    detailUrl: raw.detail_url
-      ?.replace("https://m.lost112.go.kr/", "https://www.lost112.go.kr/")
-      ?? undefined,
     status: raw.status,
   };
 }

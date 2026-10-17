@@ -1,8 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { DatePicker, SelectField } from "@/components/common/Pickers";
+import { IconBack, IconCheck, IconImage, IconX } from "@/components/common/Icons";
+import {
+  Button,
+  Chip,
+  ClaimCode,
+  Field,
+  LinkButton,
+  Notice,
+  PageShell,
+  Swatch,
+  fieldClass,
+} from "@/components/common/ui";
 import { apiFetch, ApiError } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
@@ -29,7 +42,13 @@ interface FormState {
   image: File | null;
 }
 
-const STEP_LABELS = ["물건 정보", "분실 시점·장소", "상세 설명", "사진·확인"];
+const STEP_LABELS = ["물건 정보", "시점·장소", "상세 설명", "사진·확인"];
+const STEP_TITLES = [
+  "어떤 물건을 잃어버리셨나요?",
+  "언제, 어디서 잃어버리셨나요?",
+  "물건의 특징을 알려주세요",
+  "마지막으로 확인해주세요",
+];
 
 const INITIAL_STATE: FormState = {
   title: "",
@@ -60,6 +79,13 @@ export default function NewLostItemPage() {
     }
   }, [router]);
 
+  const previewUrl = useMemo(() => (form.image ? URL.createObjectURL(form.image) : null), [form.image]);
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   function toggleColor(code: string) {
     setForm((prev) => ({
       ...prev,
@@ -74,7 +100,10 @@ export default function NewLostItemPage() {
       const titleError = validateLostItemTitle(form.title);
       if (titleError) return titleError;
       if (!form.categoryCode) return "카테고리를 선택해주세요.";
-      if (form.categoryCode === "ETC") return validateCustomCategory(form.customCategory);
+      if (form.categoryCode === "ETC") {
+        const categoryError = validateCustomCategory(form.customCategory);
+        if (categoryError) return categoryError;
+      }
       if (form.colorCodes.includes("OTHER")) return validateCustomColor(form.customColorText);
     }
     if (step === 1) {
@@ -152,265 +181,289 @@ export default function NewLostItemPage() {
 
   if (submitted) {
     return (
-      <div className="mx-auto flex max-w-md flex-1 flex-col items-center justify-center px-6 py-32 text-center">
-        <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">등록이 완료되었습니다</h1>
-        <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-          등록하신 분실물과 습득물 데이터를 비교해 추천 후보를 찾는 중입니다.
-        </p>
-        <div className="mt-8 flex gap-3">
+      <PageShell width="max-w-md">
+        <div className="print-in rounded-2xl bg-surface p-8 text-center shadow-card">
+          <span className="pop mx-auto flex size-14 items-center justify-center rounded-full bg-ok-soft text-ok">
+            <IconCheck width={28} height={28} className="draw" />
+          </span>
+          <h1 className="mt-5 text-2xl font-bold">분실물이 등록되었어요</h1>
           {createdId && (
-            <button
-              type="button"
-              onClick={() => router.push(`/lost/${createdId}/matches`)}
-              className="rounded-full bg-black px-6 py-3 text-sm font-medium text-white dark:bg-white dark:text-black"
-            >
-              매칭 결과 보기
-            </button>
+            <p className="mt-3">
+              <ClaimCode id={createdId} />
+            </p>
           )}
-          <button
-            type="button"
-            onClick={() => router.push("/lost")}
-            className="rounded-full border border-zinc-300 px-6 py-3 text-sm dark:border-zinc-700"
-          >
-            내 분실물 목록
-          </button>
+          <p className="mt-4 text-[15px] text-ink-2">
+            경찰청 습득물과 비교해 추천 후보를 찾고 있어요. 새 습득물이 올라오면 알림으로 알려드릴게요.
+          </p>
+          <div className="mt-8 flex flex-col gap-3">
+            {createdId && (
+              <LinkButton href={`/lost/${createdId}/matches`} className="min-h-12">
+                추천 후보 보기
+              </LinkButton>
+            )}
+            <LinkButton href="/lost" variant="secondary" className="min-h-12">
+              내 분실물 목록
+            </LinkButton>
+          </div>
         </div>
-      </div>
+      </PageShell>
     );
   }
 
+  const categoryLabel =
+    form.categoryCode === "ETC"
+      ? form.customCategory || "기타"
+      : (CATEGORY_OPTIONS.find((c) => c.code === form.categoryCode)?.label ?? "-");
+  const colorLabels = [
+    ...form.colorCodes.filter((code) => code !== "OTHER").map((c) => COLOR_OPTIONS.find((o) => o.code === c)?.label ?? c),
+    ...(form.colorCodes.includes("OTHER") && form.customColorText ? [form.customColorText] : []),
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16">
-      <ol className="mb-8 flex items-center gap-2 text-xs text-zinc-500">
-        {STEP_LABELS.map((label, index) => (
-          <li
-            key={label}
-            className={`flex-1 border-b-2 pb-2 text-center ${
-              index === step
-                ? "border-black font-medium text-black dark:border-white dark:text-white"
-                : "border-zinc-200 dark:border-zinc-800"
-            }`}
-          >
-            {index + 1}. {label}
-          </li>
-        ))}
-      </ol>
-
-      {step === 0 && (
-        <div className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm">
-            물품명 (2~100자)
-            <input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              maxLength={100}
-              className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-              placeholder="예: 검은색 카드지갑"
-            />
-          </label>
-          <div className="flex flex-col gap-1.5 text-sm">
-            카테고리
-            <div className="flex flex-wrap gap-2">
-              {CATEGORY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.code}
-                  type="button"
-                  onClick={() =>
-                    setForm({
-                      ...form,
-                      categoryCode: opt.code,
-                      customCategory: opt.code === "ETC" ? form.customCategory : "",
-                    })
-                  }
-                  className={`rounded-full border px-3 py-1.5 text-xs ${
-                    form.categoryCode === opt.code
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : "border-zinc-300 dark:border-zinc-700"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {form.categoryCode === "ETC" && (
-              <label className="mt-2 flex flex-col gap-1.5 text-sm">
-                기타 분류 직접 입력 (2~50자)
-                <input
-                  value={form.customCategory}
-                  onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
-                  maxLength={50}
-                  className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-                  placeholder="예: 악기, 반려동물용품, 캠핑용품"
-                />
-              </label>
-            )}
-          </div>
-          <div className="flex flex-col gap-1.5 text-sm">
-            색상 (복수 선택 가능)
-            <div className="flex flex-wrap gap-2">
-              {COLOR_OPTIONS.map((opt) => (
-                <button
-                  key={opt.code}
-                  type="button"
-                  onClick={() => toggleColor(opt.code)}
-                  className={`rounded-full border px-3 py-1.5 text-xs ${
-                    form.colorCodes.includes(opt.code)
-                      ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                      : "border-zinc-300 dark:border-zinc-700"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {form.colorCodes.includes("OTHER") && (
-              <label className="mt-2 flex flex-col gap-1.5 text-sm">
-                기타 색상 직접 입력 (1~50자)
-                <input
-                  value={form.customColorText}
-                  onChange={(e) => setForm({ ...form, customColorText: e.target.value })}
-                  maxLength={50}
-                  className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-                  placeholder="예: 민트색, 버건디, 무지개색"
-                />
-              </label>
-            )}
-          </div>
-        </div>
-      )}
-
-      {step === 1 && (
-        <div className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm">
-            분실 날짜
-            <input
-              type="date"
-              value={form.lostDate}
-              onChange={(e) => setForm({ ...form, lostDate: e.target.value })}
-              className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            시·도
-            <select
-              value={form.regionCode}
-              onChange={(e) => setForm({ ...form, regionCode: e.target.value })}
-              className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
+    <PageShell width="max-w-xl">
+      <nav aria-label="진행 단계" className="mb-8">
+        <ol className="flex items-start gap-1.5">
+          {STEP_LABELS.map((label, index) => (
+            <li
+              key={label}
+              aria-current={index === step ? "step" : undefined}
+              className="flex flex-1 flex-col gap-2"
             >
-              <option value="">선택해주세요</option>
-              {REGION_OPTIONS.map((opt) => (
-                <option key={opt.code} value={opt.code}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm">
-            상세 장소 (선택, 200자 이하)
-            <input
-              value={form.placeText}
-              onChange={(e) => setForm({ ...form, placeText: e.target.value })}
-              maxLength={200}
-              className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-              placeholder="예: 조선대학교 중앙도서관 2층"
-            />
-          </label>
-        </div>
-      )}
+              <span
+                className={`h-1.5 rounded-full transition-colors ${index <= step ? "bg-brand" : "bg-line"}`}
+              />
+              <span
+                className={`text-xs font-semibold ${
+                  index === step ? "text-ink" : "text-ink-2"
+                } ${index === step ? "" : "hidden sm:block"}`}
+              >
+                {index + 1}. {label}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </nav>
 
-      {step === 2 && (
-        <div className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm">
-            특징 설명 (선택, 1,000자 이하)
+      <h1 key={`title-${step}`} className="fade-up text-2xl font-bold sm:text-3xl">{STEP_TITLES[step]}</h1>
+      <p className="mt-2 text-sm text-ink-2">
+        {step === 3 ? "내용이 맞다면 등록해주세요. 등록 후에도 추천 후보는 계속 업데이트돼요." : "선택이라고 적힌 항목은 비워둬도 괜찮아요."}
+      </p>
+
+      <div key={`card-${step}`} className="fade-up mt-8 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
+        {step === 0 && (
+          <div className="flex flex-col gap-7">
+            <Field label="물품명" hint="2~100자" htmlFor="title">
+              <input
+                id="title"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                maxLength={100}
+                className={fieldClass}
+                placeholder="예: 검은색 카드지갑"
+              />
+            </Field>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold">종류</legend>
+              <div className="flex flex-wrap gap-2">
+                {CATEGORY_OPTIONS.map((opt) => (
+                  <Chip
+                    key={opt.code}
+                    selected={form.categoryCode === opt.code}
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        categoryCode: opt.code,
+                        customCategory: opt.code === "ETC" ? form.customCategory : "",
+                      })
+                    }
+                  >
+                    {opt.label}
+                  </Chip>
+                ))}
+              </div>
+              {form.categoryCode === "ETC" && (
+                <div className="mt-4">
+                  <Field label="기타 종류 직접 입력" hint="2~50자" htmlFor="custom-category">
+                    <input
+                      id="custom-category"
+                      value={form.customCategory}
+                      onChange={(e) => setForm({ ...form, customCategory: e.target.value })}
+                      maxLength={50}
+                      className={fieldClass}
+                      placeholder="예: 악기, 반려동물용품, 캠핑용품"
+                    />
+                  </Field>
+                </div>
+              )}
+            </fieldset>
+
+            <fieldset>
+              <legend className="mb-2 text-sm font-semibold">
+                색상 <span className="font-normal text-ink-2">여러 개 선택할 수 있어요</span>
+              </legend>
+              <div className="flex flex-wrap gap-2">
+                {COLOR_OPTIONS.map((opt) => (
+                  <Chip key={opt.code} selected={form.colorCodes.includes(opt.code)} onClick={() => toggleColor(opt.code)}>
+                    <Swatch code={opt.code} size={16} />
+                    {opt.label}
+                  </Chip>
+                ))}
+              </div>
+              {form.colorCodes.includes("OTHER") && (
+                <div className="mt-4">
+                  <Field label="기타 색상 직접 입력" hint="1~50자" htmlFor="custom-color">
+                    <input
+                      id="custom-color"
+                      value={form.customColorText}
+                      onChange={(e) => setForm({ ...form, customColorText: e.target.value })}
+                      maxLength={50}
+                      className={fieldClass}
+                      placeholder="예: 민트색, 버건디, 무지개색"
+                    />
+                  </Field>
+                </div>
+              )}
+            </fieldset>
+          </div>
+        )}
+
+        {step === 1 && (
+          <div className="flex flex-col gap-6">
+            <Field label="잃어버린 날짜" htmlFor="lost-date">
+              <DatePicker
+                id="lost-date"
+                value={form.lostDate}
+                onChange={(lostDate) => setForm({ ...form, lostDate })}
+              />
+            </Field>
+            <Field label="시·도" htmlFor="region">
+              <SelectField
+                id="region"
+                label="시·도"
+                value={form.regionCode}
+                onChange={(regionCode) => setForm({ ...form, regionCode })}
+                options={REGION_OPTIONS.map((o) => ({ value: o.code, label: o.label }))}
+                placeholder="시·도를 선택해주세요"
+              />
+            </Field>
+            <Field label="상세 장소" hint="선택 · 200자 이하" htmlFor="place">
+              <input
+                id="place"
+                value={form.placeText}
+                onChange={(e) => setForm({ ...form, placeText: e.target.value })}
+                maxLength={200}
+                className={fieldClass}
+                placeholder="예: 조선대학교 중앙도서관 2층"
+              />
+            </Field>
+          </div>
+        )}
+
+        {step === 2 && (
+          <Field label="특징 설명" hint="선택 · 1,000자 이하" htmlFor="description">
             <textarea
+              id="description"
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               maxLength={1000}
-              rows={6}
-              className="rounded-md border border-zinc-300 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900"
-              placeholder="브랜드, 모델명, 각인, 스크래치 등 구체적인 특징을 입력해주세요."
+              rows={7}
+              className={`${fieldClass} min-h-40 resize-y py-3 leading-relaxed`}
+              placeholder="브랜드, 모델명, 각인, 스크래치, 안에 들어 있던 물건 등 구체적일수록 정확해져요."
             />
-          </label>
-        </div>
-      )}
+            <span className="num self-end text-xs text-ink-2">{form.description.length} / 1000</span>
+          </Field>
+        )}
 
-      {step === 3 && (
-        <div className="flex flex-col gap-5">
-          <label className="flex flex-col gap-1.5 text-sm">
-            사진 (선택, JPG/PNG/WEBP, 최대 10MB)
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => setForm({ ...form, image: e.target.files?.[0] ?? null })}
-            />
-          </label>
-          <dl className="rounded-md border border-zinc-200 p-4 text-sm dark:border-zinc-800">
-            <div className="flex justify-between py-1">
-              <dt className="text-zinc-500">물품명</dt>
-              <dd>{form.title || "-"}</dd>
+        {step === 3 && (
+          <div className="flex flex-col gap-7">
+            <div>
+              <p className="mb-2 text-sm font-semibold">
+                사진 <span className="font-normal text-ink-2">선택 · JPG/PNG/WEBP · 최대 10MB</span>
+              </p>
+              {previewUrl ? (
+                <div className="relative overflow-hidden rounded-xl border border-line">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={previewUrl} alt="선택한 사진 미리보기" className="max-h-64 w-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, image: null })}
+                    className="absolute right-2 top-2 flex size-10 items-center justify-center rounded-full bg-ink/80 text-bg hover:bg-ink"
+                    aria-label="사진 지우기"
+                  >
+                    <IconX width={18} height={18} />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl bg-surface-2 px-4 py-8 text-center transition-colors hover:brightness-95 focus-within:ring-4 focus-within:ring-ink/10">
+                  <IconImage width={28} height={28} className="text-ink" />
+                  <span className="text-[15px] font-semibold">사진 올리기</span>
+                  <span className="text-sm text-ink-2">사진이 있으면 비슷한 습득물을 더 정확히 찾아요</span>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="sr-only"
+                    onChange={(e) => setForm({ ...form, image: e.target.files?.[0] ?? null })}
+                  />
+                </label>
+              )}
             </div>
-            <div className="flex justify-between py-1">
-              <dt className="text-zinc-500">카테고리</dt>
-              <dd>
-                {form.categoryCode === "ETC"
-                  ? form.customCategory || "기타"
-                  : (CATEGORY_OPTIONS.find((c) => c.code === form.categoryCode)?.label ?? "-")}
-              </dd>
-            </div>
-            <div className="flex justify-between py-1">
-              <dt className="text-zinc-500">색상</dt>
-              <dd>
-                {[
-                  ...form.colorCodes.filter((code) => code !== "OTHER"),
-                  ...(form.colorCodes.includes("OTHER") && form.customColorText
-                    ? [form.customColorText]
-                    : []),
-                ].join(", ") || "-"}
-              </dd>
-            </div>
-            <div className="flex justify-between py-1">
-              <dt className="text-zinc-500">분실 날짜</dt>
-              <dd>{form.lostDate || "-"}</dd>
-            </div>
-            <div className="flex justify-between py-1">
-              <dt className="text-zinc-500">지역</dt>
-              <dd>{REGION_OPTIONS.find((r) => r.code === form.regionCode)?.label ?? "-"}</dd>
-            </div>
-          </dl>
-          {submitError && <p className="text-sm text-red-600">{submitError}</p>}
-        </div>
-      )}
 
-      {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-      <div className="mt-8 flex justify-between">
-        <button
-          type="button"
-          onClick={goBack}
-          disabled={step === 0}
-          className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm disabled:opacity-40 dark:border-zinc-700"
-        >
-          이전
-        </button>
-        {step < STEP_LABELS.length - 1 ? (
-          <button
-            type="button"
-            onClick={goNext}
-            className="rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-black"
-          >
-            다음
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-black"
-          >
-            {submitting ? "등록 중..." : "등록하기"}
-          </button>
+            <div className="overflow-hidden rounded-xl border border-line">
+              <div className="flex items-center justify-between bg-surface-2 px-4 py-2.5">
+                <span className="text-sm font-bold">등록 내용 확인</span>
+                <button
+                  type="button"
+                  onClick={() => setStep(0)}
+                  className="min-h-8 text-sm font-semibold text-ink underline underline-offset-4"
+                >
+                  수정
+                </button>
+              </div>
+              <dl className="divide-y divide-line px-4 text-[15px]">
+                <Summary label="물품명" value={form.title || "-"} />
+                <Summary label="종류" value={categoryLabel} />
+                <Summary label="색상" value={colorLabels.join(", ") || "-"} />
+                <Summary label="잃어버린 날" value={form.lostDate || "-"} />
+                <Summary label="지역" value={REGION_OPTIONS.find((r) => r.code === form.regionCode)?.label ?? "-"} />
+                {form.placeText && <Summary label="상세 장소" value={form.placeText} />}
+              </dl>
+            </div>
+            {submitError && <Notice tone="error">{submitError}</Notice>}
+          </div>
         )}
       </div>
+
+      {error && (
+        <div className="mt-4">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+
+      <div className="mt-6 flex items-center gap-3">
+        <Button variant="secondary" onClick={goBack} disabled={step === 0} className="min-h-12 px-5">
+          <IconBack width={18} height={18} />
+          이전
+        </Button>
+        {step < STEP_LABELS.length - 1 ? (
+          <Button onClick={goNext} className="min-h-12 flex-1">
+            다음
+          </Button>
+        ) : (
+          <Button onClick={handleSubmit} disabled={submitting} className="min-h-12 flex-1">
+            {submitting ? "등록 중..." : "분실물 등록하기"}
+          </Button>
+        )}
+      </div>
+    </PageShell>
+  );
+}
+
+function Summary({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-4 py-3">
+      <dt className="shrink-0 text-ink-2">{label}</dt>
+      <dd className="text-right font-medium">{value}</dd>
     </div>
   );
 }

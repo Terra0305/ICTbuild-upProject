@@ -26,3 +26,5 @@ frontend/.env*.local
 /infra/
 /AWS_DEPLOYMENT_PLAN.md
 /CLAUDE.md
+.impeccable/surfaces/frontend-src-app-page-tsx.md
+PRODUCT.md

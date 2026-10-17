@@ -1,12 +1,22 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { IconBack, IconImage, IconSearch } from "@/components/common/Icons";
+import {
+  Button,
+  ClaimCode,
+  LinkButton,
+  Notice,
+  PageShell,
+  StatusBadge,
+  Swatch,
+} from "@/components/common/ui";
+import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
 import { closeLostItem, getLostItem } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
-import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
 import type { LostItem, LostItemClosureReason } from "@/types";
 
 const CLOSURE_OPTIONS: Array<{
@@ -48,8 +58,10 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
   const router = useRouter();
   const [item, setItem] = useState<LostItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [showCloseOptions, setShowCloseOptions] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
+  const dialogRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -61,71 +73,158 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
       .catch(() => setError("분실물을 찾을 수 없습니다."));
   }, [id, router]);
 
+  useEffect(() => {
+    if (!showCloseOptions) return;
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLElement>("button")?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setShowCloseOptions(false);
+    }
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+      previous?.focus();
+    };
+  }, [showCloseOptions]);
+
   async function handleClose(reason: LostItemClosureReason) {
     if (!item) return;
     setIsClosing(true);
+    setActionError(null);
     try {
       setItem(await closeLostItem(item.id, reason));
       setShowCloseOptions(false);
     } catch {
-      setError("종료 처리에 실패했습니다. 다시 시도해주세요.");
+      setActionError("종료 처리에 실패했습니다. 다시 시도해주세요.");
+      setShowCloseOptions(false);
     } finally {
       setIsClosing(false);
     }
   }
 
   if (error) {
-    return <p className="px-6 py-16 text-center text-sm text-red-600">{error}</p>;
+    return (
+      <PageShell>
+        <Notice tone="error">{error}</Notice>
+        <div className="mt-6">
+          <LinkButton href="/lost" variant="secondary">
+            내 분실물로 돌아가기
+          </LinkButton>
+        </div>
+      </PageShell>
+    );
   }
   if (!item) {
-    return <p className="px-6 py-16 text-center text-sm text-zinc-500">불러오는 중...</p>;
+    return (
+      <PageShell>
+        <div className="skeleton h-10 w-2/3" />
+        <div className="skeleton mt-6 h-64" />
+      </PageShell>
+    );
   }
 
-  return (
-    <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16">
-      <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">{item.title}</h1>
-      <dl className="mt-6 flex flex-col gap-2 text-sm">
-        <Row label="카테고리" value={CATEGORY_OPTIONS.find((c) => c.code === item.categoryCode)?.label ?? item.categoryCode} />
-        <Row
-          label="색상"
-          value={item.colorCodes.map((c) => COLOR_OPTIONS.find((o) => o.code === c)?.label ?? c).join(", ") || "-"}
-        />
-        <Row label="분실 날짜" value={item.lostDate} />
-        <Row label="지역" value={REGION_OPTIONS.find((r) => r.code === item.regionCode)?.label ?? item.regionCode} />
-        <Row label="상세 장소" value={item.placeText || "-"} />
-        <Row label="설명" value={item.description || "-"} />
-        <Row label="상태" value={item.status === "ACTIVE" ? "찾는 중" : item.status === "FOUND" ? "찾았어요" : "종료"} />
-        {item.closureReason && <Row label="종료 결과" value={CLOSURE_LABELS[item.closureReason]} />}
-      </dl>
+  const category =
+    item.categoryCode === "ETC" && item.customCategory
+      ? item.customCategory
+      : (CATEGORY_OPTIONS.find((c) => c.code === item.categoryCode)?.label ?? item.categoryCode);
+  const colorLabels = [
+    ...item.colorCodes.map((c) => COLOR_OPTIONS.find((o) => o.code === c)?.label ?? c),
+    ...(item.customColorText ? [item.customColorText] : []),
+  ];
 
-      <div className="mt-8 flex gap-3">
-        <Link
-          href={`/lost/${item.id}/matches`}
-          className="rounded-full bg-black px-5 py-2.5 text-sm font-medium text-white dark:bg-white dark:text-black"
-        >
+  return (
+    <PageShell width="max-w-2xl">
+      <Link href="/lost" className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink">
+        <IconBack width={18} height={18} />
+        내 분실물
+      </Link>
+
+      <article className="overflow-hidden rounded-2xl bg-surface shadow-card">
+        <div className="relative flex aspect-[16/9] items-center justify-center bg-surface-2">
+          {item.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.imageUrl} alt={`${item.title} 사진`} className="size-full object-cover" />
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-ink-2">
+              <IconImage width={32} height={32} />
+              <span className="text-sm">등록된 사진이 없어요</span>
+            </div>
+          )}
+        </div>
+        <div className="p-5 sm:p-7">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusBadge status={item.status} />
+            <ClaimCode id={item.id} />
+          </div>
+          <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{item.title}</h1>
+
+          <dl className="mt-6 grid gap-x-8 gap-y-5 text-[15px] sm:grid-cols-2">
+            <Info label="종류" value={category} />
+            <Info
+              label="색상"
+              value={
+                colorLabels.length ? (
+                  <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    {item.colorCodes.map((c) => (
+                      <span key={c} className="inline-flex items-center gap-1.5">
+                        <Swatch code={c} />
+                        {COLOR_OPTIONS.find((o) => o.code === c)?.label ?? c}
+                      </span>
+                    ))}
+                    {item.customColorText && <span>{item.customColorText}</span>}
+                  </span>
+                ) : (
+                  "-"
+                )
+              }
+            />
+            <Info label="잃어버린 날" value={item.lostDate} />
+            <Info label="지역" value={REGION_OPTIONS.find((r) => r.code === item.regionCode)?.label ?? item.regionCode} />
+            <Info label="상세 장소" value={item.placeText || "-"} wide />
+            <Info label="특징 설명" value={item.description || "-"} wide />
+            {item.closureReason && <Info label="종료 결과" value={CLOSURE_LABELS[item.closureReason]} wide />}
+          </dl>
+        </div>
+      </article>
+
+      {actionError && (
+        <div className="mt-4">
+          <Notice tone="error">{actionError}</Notice>
+        </div>
+      )}
+
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+        <LinkButton href={`/lost/${item.id}/matches`} className="min-h-12 flex-1">
+          <IconSearch width={18} height={18} />
           추천 후보 보기
-        </Link>
+        </LinkButton>
         {item.status === "ACTIVE" && (
-          <button
-            type="button"
-            onClick={() => setShowCloseOptions(true)}
-            className="rounded-full border border-zinc-300 px-5 py-2.5 text-sm dark:border-zinc-700"
-          >
-            종료 처리
-          </button>
+          <Button variant="secondary" className="min-h-12" onClick={() => setShowCloseOptions(true)}>
+            찾기 종료하기
+          </Button>
         )}
       </div>
 
       {showCloseOptions && (
-        <div className="fixed inset-0 z-50 flex items-end bg-black/40 p-4 sm:items-center sm:justify-center">
+        <div
+          className="fixed inset-0 z-50 flex items-end bg-black/40 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !isClosing) setShowCloseOptions(false);
+          }}
+        >
           <section
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="close-title"
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-950"
+            className="fade-up w-full max-w-lg rounded-2xl bg-surface p-6 shadow-card"
           >
-            <h2 id="close-title" className="text-lg font-semibold">분실물 찾기를 종료할까요?</h2>
-            <p className="mt-1 text-sm text-zinc-500">종료 사유를 선택하면 이후 새 매칭 알림이 중지됩니다.</p>
+            <h2 id="close-title" className="text-xl font-bold">
+              분실물 찾기를 종료할까요?
+            </h2>
+            <p className="mt-1.5 text-sm text-ink-2">종료 사유를 선택하면 이후 새 매칭 알림이 중지돼요.</p>
             <div className="mt-5 flex flex-col gap-2">
               {CLOSURE_OPTIONS.map((option) => (
                 <button
@@ -133,33 +232,33 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
                   type="button"
                   disabled={isClosing}
                   onClick={() => handleClose(option.reason)}
-                  className="rounded-xl border border-zinc-200 p-4 text-left hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+                  className="rounded-full bg-surface-2/70 px-6 py-3.5 text-left transition-colors hover:bg-surface-2 disabled:opacity-50"
                 >
-                  <span className="block text-sm font-medium">{option.title}</span>
-                  <span className="mt-1 block text-xs text-zinc-500">{option.description}</span>
+                  <span className="block text-[15px] font-bold">{option.title}</span>
+                  <span className="mt-0.5 block text-sm text-ink-2">{option.description}</span>
                 </button>
               ))}
             </div>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               disabled={isClosing}
               onClick={() => setShowCloseOptions(false)}
-              className="mt-4 w-full rounded-full border border-zinc-300 px-4 py-2 text-sm dark:border-zinc-700"
+              className="mt-3 w-full"
             >
-              취소
-            </button>
+              계속 찾기
+            </Button>
           </section>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Info({ label, value, wide }: { label: string; value: React.ReactNode; wide?: boolean }) {
   return (
-    <div className="flex justify-between border-b border-zinc-100 py-2 dark:border-zinc-900">
-      <dt className="text-zinc-500">{label}</dt>
-      <dd className="text-right text-black dark:text-zinc-50">{value}</dd>
+    <div className={wide ? "sm:col-span-2" : ""}>
+      <dt className="text-sm font-semibold text-ink-2">{label}</dt>
+      <dd className="mt-1 whitespace-pre-wrap font-medium">{value}</dd>
     </div>
   );
 }

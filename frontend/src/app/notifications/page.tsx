@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { Reveal } from "@/components/common/Reveal";
+import { IconArrow, IconBell } from "@/components/common/Icons";
+import { EmptyState, LinkButton, LoadingList, Notice, PageHeader, PageShell } from "@/components/common/ui";
 import { listNotifications, markNotificationRead } from "@/lib/api";
 import { isAuthenticated } from "@/lib/auth";
 import type { Notification } from "@/types";
@@ -12,6 +15,15 @@ const CHANNEL_LABELS: Record<Notification["channel"], string> = {
   IN_APP: "서비스 내 알림",
   EMAIL: "이메일",
 };
+
+function formatWhen(iso: string) {
+  return new Date(iso).toLocaleString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -25,61 +37,96 @@ export default function NotificationsPage() {
     }
     listNotifications()
       .then(setItems)
-      .catch(() => setError("알림을 불러오지 못했습니다."));
+      .catch(() => setError("알림을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."));
   }, [router]);
 
   async function handleRead(notification: Notification) {
     if (notification.status === "READ") return;
-    await markNotificationRead(notification.id);
-    setItems((prev) =>
-      prev?.map((item) =>
-        item.id === notification.id ? { ...item, status: "READ" as const } : item
-      ) ?? null
-    );
+    try {
+      await markNotificationRead(notification.id);
+      setItems(
+        (prev) =>
+          prev?.map((item) => (item.id === notification.id ? { ...item, status: "READ" as const } : item)) ?? null,
+      );
+    } catch {
+      setError("읽음 처리에 실패했습니다. 다시 시도해주세요.");
+    }
   }
 
+  const unread = items?.filter((i) => i.status !== "READ").length ?? 0;
+
   return (
-    <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-16">
-      <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">알림</h1>
+    <PageShell>
+      <PageHeader
+        title="알림"
+        description={unread > 0 ? `새 알림 ${unread}건이 있어요.` : "새 매칭 후보가 생기면 여기에 알려드려요."}
+      />
 
-      {error && <p className="mt-6 text-sm text-red-600">{error}</p>}
-      {items === null && !error && <p className="mt-6 text-sm text-zinc-500">불러오는 중...</p>}
-      {items?.length === 0 && <p className="mt-6 text-sm text-zinc-500">받은 알림이 없습니다.</p>}
+      {error && (
+        <div className="mb-4">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+      {items === null && !error && <LoadingList rows={3} />}
+      {items?.length === 0 && (
+        <EmptyState
+          title="아직 받은 알림이 없어요"
+          description="등록한 분실물과 닮은 새 습득물이 올라오면 이곳과 이메일로 알려드려요."
+          action={
+            <LinkButton href="/lost" variant="secondary">
+              내 분실물 보기
+            </LinkButton>
+          }
+        />
+      )}
 
-      <ul className="mt-6 flex flex-col gap-3">
-        {items?.map((item) => (
-          <li
-            key={item.id}
-            className={`rounded-md border px-4 py-3 text-sm ${
-              item.status === "READ"
-                ? "border-zinc-100 text-zinc-500 dark:border-zinc-900"
-                : "border-zinc-300 dark:border-zinc-700"
-            }`}
-          >
-            <div className="flex items-center justify-between">
-              <span>{CHANNEL_LABELS[item.channel]} · 새로운 매칭 후보가 등록되었습니다</span>
-              {item.status !== "READ" && (
-                <button
-                  type="button"
-                  onClick={() => handleRead(item)}
-                  className="text-xs font-medium text-black underline dark:text-white"
-                >
-                  읽음 처리
-                </button>
-              )}
-            </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-zinc-500">
-              <span>{new Date(item.createdAt).toLocaleString("ko-KR")}</span>
-              <Link
-                href={`/lost/${item.lostItemId}/matches`}
-                className="font-medium text-black underline dark:text-white"
+      <ul className="flex flex-col gap-3">
+        {items?.map((item) => {
+          const isUnread = item.status !== "READ";
+          return (
+            <Reveal
+              as="li"
+              key={item.id}
+              className={`flex gap-4 rounded-2xl border p-4 sm:p-5 ${
+                isUnread ? "border-transparent bg-surface shadow-card" : "border-line bg-surface/60"
+              }`}
+            >
+              <span
+                className={`mt-0.5 flex size-8 shrink-0 items-center justify-center ${isUnread ? "text-ink" : "text-ink-2/60"}`}
               >
-                매칭 결과 보기
-              </Link>
-            </div>
-          </li>
-        ))}
+                <IconBell width={24} height={24} className={isUnread ? "bell-ring" : ""} />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-[15px] ${isUnread ? "font-bold" : "font-medium text-ink-2"}`}>
+                  새로운 매칭 후보가 등록되었어요
+                </p>
+                <p className="mt-0.5 text-sm text-ink-2">
+                  {CHANNEL_LABELS[item.channel]} · {formatWhen(item.createdAt)}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/lost/${item.lostItemId}/matches`}
+                    onClick={() => handleRead(item)}
+                    className="inline-flex min-h-10 items-center gap-1.5 rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:opacity-85"
+                  >
+                    매칭 결과 보기
+                    <IconArrow width={16} height={16} />
+                  </Link>
+                  {isUnread && (
+                    <button
+                      type="button"
+                      onClick={() => handleRead(item)}
+                      className="min-h-10 rounded-full px-4 text-sm font-semibold text-ink-2 hover:bg-surface-2 hover:text-ink"
+                    >
+                      읽음 처리
+                    </button>
+                  )}
+                </div>
+              </div>
+            </Reveal>
+          );
+        })}
       </ul>
-    </div>
+    </PageShell>
   );
 }
