@@ -70,13 +70,14 @@ p.b { font-size: 30px; line-height: 1.55; }
 body.presenting { background: #000; padding-top: 0; overflow: hidden; }
 body.presenting .slide-nav, body.presenting #downloadSection { display: none; }
 body.presenting .slide { display: none; margin: 0; }
-body.presenting .slide.current { display: flex; position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%) scale(var(--k, 1)); transform-origin: center center; z-index: 5; }
-#hud { display: none; position: fixed; z-index: 10; font-family: 'Inter', var(--font-main); font-size: 15px; color: rgba(255,255,255,.55); }
+body.presenting .slide.current { display: flex; position: fixed; left: var(--x, 0px); top: var(--y, 0px); transform: scale(var(--k, 1)); transform-origin: top left; z-index: 5; }
+#hud { display: none; }
 body.presenting #hud { display: block; }
-#hudCount { right: 18px; bottom: 12px; }
-#hudTimer { left: 18px; bottom: 12px; }
-#hudHint { left: 50%; bottom: 12px; transform: translateX(-50%); transition: opacity .6s; }
-#hudHint.hide { opacity: 0; }
+#hudTimer, #hudHint { position: fixed; z-index: 10; font-family: 'Inter', var(--font-main); font-size: 15px; font-weight: 600; color: #fff; background: rgba(0,0,0,.62); border-radius: 999px; padding: 6px 14px; }
+#hudTimer { top: 12px; right: 14px; }
+#hudTimer:empty { display: none; }
+#hudHint { left: 50%; bottom: 14px; transform: translateX(-50%); transition: opacity .6s; }
+#hudHint.hide { opacity: 0; pointer-events: none; }
 #downloadSection { text-align: center; padding: 40px; }
 #downloadBtn { font-family: var(--font-main); font-size: 22px; font-weight: 700; padding: 16px 40px; border-radius: 999px; border: 0; background: #1A1A1A; color: #fff; cursor: pointer; }
 #downloadBtn:disabled { opacity: .5; }
@@ -108,7 +109,7 @@ body.presenting #hud { display: block; }
     <div class="col" style="flex:.8;">
       <div class="big">+65%</div>
       <p class="lbl">유실물 접수 건수<br>2021년 10.2만 건 → 2025년 16.8만 건</p>
-      <div class="big" style="margin-top:60px;">65.6 → 51.5%</div>
+      <div class="big" style="margin-top:60px; font-size:92px; white-space:nowrap;">65.6 → 51.5%</div>
       <p class="lbl">주인에게 돌아간 비율<br>(2021년 → 2025년)</p>
     </div>
     <div class="col" style="flex:1.2;">
@@ -366,7 +367,7 @@ body.presenting #hud { display: block; }
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
 </div>
 
-<div id="hud"><span id="hudTimer" style="position:fixed"></span><span id="hudCount" style="position:fixed"></span><span id="hudHint" style="position:fixed">← → 이동 · Enter 영상 재생/정지 · T 타이머 · Esc 종료</span></div>
+<div id="hud"><span id="hudTimer"></span><span id="hudHint">← → 이동 · Enter 영상 재생/정지 · T 타이머 · Esc 종료</span></div>
 <input type="file" id="videoInput" accept="video/*" style="display:none">
 
 <div id="downloadSection">
@@ -413,16 +414,18 @@ document.getElementById('downloadBtn').addEventListener('click', async function(
   const slides = [...document.querySelectorAll('.slide')];
   const body = document.body;
   let idx = 0, on = false, timerStart = 0, timerId = null, showTimer = true;
-  const countEl = document.getElementById('hudCount'), timerEl = document.getElementById('hudTimer'), hintEl = document.getElementById('hudHint');
+  const timerEl = document.getElementById('hudTimer'), hintEl = document.getElementById('hudHint');
 
   function fit() {
     const k = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-    document.documentElement.style.setProperty('--k', k);
+    const root = document.documentElement.style;
+    root.setProperty('--k', k);
+    root.setProperty('--x', Math.round((window.innerWidth - 1920 * k) / 2) + 'px');
+    root.setProperty('--y', Math.round((window.innerHeight - 1080 * k) / 2) + 'px');
   }
   function show(i) {
     idx = Math.max(0, Math.min(slides.length - 1, i));
     slides.forEach((s, n) => s.classList.toggle('current', n === idx));
-    countEl.textContent = (idx + 1) + ' / ' + slides.length;
     history.replaceState(null, '', '#slide-' + (idx + 1));
     slides.forEach(s => { const v = s.querySelector('video'); if (v && !s.classList.contains('current')) v.pause(); });
   }
