@@ -27,7 +27,7 @@ type Filter = "ALL" | "ACTIVE" | "DONE";
 const FILTERS: Array<{ key: Filter; label: string }> = [
   { key: "ALL", label: "전체" },
   { key: "ACTIVE", label: "찾는 중" },
-  { key: "DONE", label: "찾았거나 종료" },
+  { key: "DONE", label: "완료" },
 ];
 
 export default function LostItemListPage() {
@@ -65,9 +65,11 @@ export default function LostItemListPage() {
             : "등록한 분실물과 추천 후보를 한곳에서 확인해요."
         }
         action={
-          <LinkButton href="/lost/new" className="hidden md:inline-flex">
-            <IconPlus width={18} height={18} />새 분실물 등록
-          </LinkButton>
+          <div className="hidden md:block">
+            <LinkButton href="/lost/new">
+              <IconPlus width={18} height={18} />새 분실물 등록
+            </LinkButton>
+          </div>
         }
       />
 
@@ -84,15 +86,20 @@ export default function LostItemListPage() {
 
       {items && items.length > 0 && (
         <>
-          <div role="group" aria-label="상태 필터" className="mb-5 flex rounded-full bg-surface-2 p-1">
+          <div role="group" aria-label="상태 필터" className="relative mb-5 grid grid-cols-3 rounded-full bg-surface-2 p-1">
+            <span
+              aria-hidden="true"
+              className="seg-thumb absolute inset-y-1 left-1 w-[calc((100%-0.5rem)/3)] rounded-full bg-surface shadow-card"
+              style={{ transform: `translateX(${FILTERS.findIndex((f) => f.key === filter) * 100}%)` }}
+            />
             {FILTERS.map((f) => (
               <button
                 key={f.key}
                 type="button"
                 aria-pressed={filter === f.key}
                 onClick={() => setFilter(f.key)}
-                className={`min-h-9 flex-1 rounded-full px-3 text-[13px] font-semibold transition-all ${
-                  filter === f.key ? "bg-surface text-ink shadow-card" : "text-ink-2 hover:text-ink"
+                className={`relative z-10 min-h-9 rounded-full px-3 text-[0.8125rem] font-semibold transition-colors duration-200 ${
+                  filter === f.key ? "text-ink" : "text-ink-2 hover:text-ink"
                 }`}
               >
                 {f.label}
@@ -103,7 +110,7 @@ export default function LostItemListPage() {
           {visible.length === 0 ? (
             <EmptyState title="해당하는 분실물이 없어요" description="다른 필터를 선택해보세요." />
           ) : (
-            <ul className="flex flex-col gap-3">
+            <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 lg:grid-cols-[repeat(2,minmax(0,1fr))] lg:gap-4">
               {visible.map((item, i) => (
                 <Reveal as="li" key={item.id} delay={Math.min(i, 3) * 60}>
                   <LostItemTag item={item} />
@@ -128,7 +135,7 @@ function LostItemTag({ item }: { item: LostItem }) {
   return (
     <Link
       href={`/lost/${item.id}`}
-      className={`group flex overflow-hidden rounded-2xl bg-surface shadow-card transition-transform duration-200 hover:-translate-y-0.5 ${
+      className={`group flex overflow-hidden rounded-2xl bg-surface shadow-card card-lift ${
         muted ? "opacity-80" : ""
       }`}
     >
@@ -143,7 +150,7 @@ function LostItemTag({ item }: { item: LostItem }) {
       <div className="perf w-0.5 self-stretch" aria-hidden="true" />
       <div className="min-w-0 flex-1 p-4">
         <div className="flex items-start justify-between gap-3">
-          <p className="min-w-0 truncate text-[17px] font-semibold">{item.title}</p>
+          <p className="line-clamp-2 min-w-0 text-[1.0625rem] font-semibold leading-snug">{item.title}</p>
           <StatusBadge status={item.status} />
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-2">

@@ -135,14 +135,14 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
   ];
 
   return (
-    <PageShell width="max-w-2xl">
+    <PageShell width="max-w-2xl lg:max-w-5xl 2xl:max-w-6xl">
       <Link href="/lost" className="mb-4 inline-flex min-h-10 items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink">
         <IconBack width={18} height={18} />
         내 분실물
       </Link>
 
-      <article className="overflow-hidden rounded-2xl bg-surface shadow-card">
-        <div className="relative flex aspect-[16/9] items-center justify-center bg-surface-2">
+      <article className="overflow-hidden rounded-2xl bg-surface shadow-card lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="relative flex aspect-[16/9] items-center justify-center bg-surface-2 lg:aspect-auto lg:min-h-[22rem]">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.imageUrl} alt={`${item.title} 사진`} className="size-full object-cover" />
@@ -160,7 +160,7 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
           </div>
           <h1 className="mt-3 text-2xl font-bold sm:text-3xl">{item.title}</h1>
 
-          <dl className="mt-6 grid gap-x-8 gap-y-5 text-[15px] sm:grid-cols-2">
+          <dl className="mt-6 grid gap-x-8 gap-y-5 text-[0.9375rem] sm:grid-cols-2">
             <Info label="종류" value={category} />
             <Info
               label="색상"
@@ -209,7 +209,7 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
 
       {showCloseOptions && (
         <div
-          className="fixed inset-0 z-50 flex items-end bg-black/40 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
+          className="backdrop-in fixed inset-0 z-50 flex items-end bg-black/40 p-4 backdrop-blur-sm sm:items-center sm:justify-center"
           onClick={(e) => {
             if (e.target === e.currentTarget && !isClosing) setShowCloseOptions(false);
           }}
@@ -219,7 +219,7 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
             role="dialog"
             aria-modal="true"
             aria-labelledby="close-title"
-            className="fade-up w-full max-w-lg rounded-2xl bg-surface p-6 shadow-card"
+            className="sheet-in max-h-[calc(100dvh-2rem)] w-full max-w-lg overflow-y-auto overscroll-contain rounded-2xl bg-surface p-6 shadow-card"
           >
             <h2 id="close-title" className="text-xl font-bold">
               분실물 찾기를 종료할까요?
@@ -234,7 +234,7 @@ export default function LostItemDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => handleClose(option.reason)}
                   className="rounded-full bg-surface-2/70 px-6 py-3.5 text-left transition-colors hover:bg-surface-2 disabled:opacity-50"
                 >
-                  <span className="block text-[15px] font-bold">{option.title}</span>
+                  <span className="block text-[0.9375rem] font-bold">{option.title}</span>
                   <span className="mt-0.5 block text-sm text-ink-2">{option.description}</span>
                 </button>
               ))}

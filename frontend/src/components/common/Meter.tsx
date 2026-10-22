@@ -17,7 +17,7 @@ export function Meter({ percent, delay = 0 }: { percent: number; delay?: number 
           io.disconnect();
         }
       },
-      { threshold: 0.6 },
+      { rootMargin: "0px 0px -160px 0px", threshold: 0.2 },
     );
     io.observe(el);
     return () => io.disconnect();

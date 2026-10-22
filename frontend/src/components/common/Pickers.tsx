@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import {
   IconCalendar,
@@ -13,7 +13,7 @@ import {
 /* ---------- shared popover plumbing ---------- */
 
 const TRIGGER =
-  "flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-transparent bg-surface-2 px-4 text-left text-[17px] transition-colors focus:border-ink focus:bg-surface focus:outline-none focus:ring-4 focus:ring-ink/10 aria-expanded:border-ink aria-expanded:bg-surface";
+  "flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-transparent bg-surface-2 px-4 text-left text-[1.0625rem] transition-colors focus:border-ink focus:bg-surface focus:outline-none focus:ring-4 focus:ring-ink/10 aria-expanded:border-ink aria-expanded:bg-surface";
 
 function useDismiss(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,20 +37,73 @@ function useDismiss(open: boolean, onClose: () => void) {
   return ref;
 }
 
-function Popover({ children, label }: { children: ReactNode; label: string }) {
+/**
+ * 트리거 바로 아래(공간이 모자라면 위)에 뜨는 패널.
+ * 남은 화면 높이에 맞춰 최대 높이를 줄이고, 넘치면 패널 안에서 스크롤한다.
+ * (절대 위치라 문서 높이를 늘리지 않으므로, 화면 밖으로 밀려나 선택할 수 없게 되는 것을 막는다.)
+ */
+function FloatingPanel({
+  children,
+  label,
+  role = "dialog",
+  className = "",
+  cap = 640,
+}: {
+  children: ReactNode;
+  label: string;
+  role?: "dialog" | "presentation";
+  className?: string;
+  cap?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, []);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const anchor = el?.parentElement;
+    if (!el || !anchor) return;
+
+    const place = () => {
+      const r = anchor.getBoundingClientRect();
+      // 모바일에서는 하단 탭바(약 4.5rem)가 가리는 영역을 비워둔다.
+      const reserveBottom = window.innerWidth < 768 ? 88 : 16;
+      const below = window.innerHeight - r.bottom - reserveBottom - 8;
+      const above = r.top - 64 - 8;
+      el.style.maxHeight = "none";
+      const needed = Math.min(el.scrollHeight, cap);
+      const openBelow = below >= needed || below >= above;
+      const room = Math.max(160, Math.floor(openBelow ? below : above));
+      el.style.maxHeight = `${Math.min(room, cap)}px`;
+      el.style.top = openBelow ? "calc(100% + 8px)" : "auto";
+      el.style.bottom = openBelow ? "auto" : "calc(100% + 8px)";
+      el.style.transformOrigin = openBelow ? "top" : "bottom";
+    };
+
+    place();
+    window.addEventListener("resize", place);
+    window.addEventListener("scroll", place, { passive: true });
+    return () => {
+      window.removeEventListener("resize", place);
+      window.removeEventListener("scroll", place);
+    };
+  }, [cap]);
+
   return (
     <div
       ref={ref}
-      role="dialog"
-      aria-label={label}
-      className="pop-in absolute left-0 right-0 top-[calc(100%+8px)] z-30 origin-top rounded-2xl bg-surface p-3 shadow-[0_12px_40px_-8px_rgb(0_0_0/0.28)] ring-1 ring-line sm:p-4"
+      role={role === "dialog" ? "dialog" : undefined}
+      aria-label={role === "dialog" ? label : undefined}
+      className={`pop-in absolute left-0 right-0 z-30 overflow-y-auto overscroll-contain rounded-2xl bg-surface shadow-[0_12px_40px_-8px_rgb(0_0_0/0.28)] ring-1 ring-line ${className}`}
     >
       {children}
     </div>
+  );
+}
+
+function Popover({ children, label }: { children: ReactNode; label: string }) {
+  return (
+    <FloatingPanel label={label} className="p-3 sm:p-4">
+      {children}
+    </FloatingPanel>
   );
 }
 
@@ -175,13 +228,13 @@ export function DatePicker({
                 <button
                   type="button"
                   onClick={() => setView("months")}
-                  className="inline-flex min-h-10 items-center gap-1 rounded-full px-3 text-[17px] font-bold hover:bg-surface-2"
+                  className="inline-flex min-h-10 items-center gap-1 whitespace-nowrap rounded-full px-2 text-[1.0625rem] font-bold hover:bg-surface-2 sm:px-3"
                 >
                   {year}년 {month + 1}월
                   <IconChevronDown width={16} height={16} />
                 </button>
               ) : (
-                <span className="px-3 text-[17px] font-bold">{year}년</span>
+                <span className="whitespace-nowrap px-2 text-[1.0625rem] font-bold sm:px-3">{year}년</span>
               )}
               <div className="flex gap-1">
                 <button
@@ -218,7 +271,7 @@ export function DatePicker({
                         setCursor(new Date(year, m, 1));
                         setView("days");
                       }}
-                      className={`min-h-12 rounded-full text-[15px] font-semibold transition-colors disabled:text-ink-2/40 ${
+                      className={`min-h-12 rounded-full text-[0.9375rem] font-semibold transition-colors disabled:text-ink-2/40 ${
                         current ? "bg-ink text-bg" : "hover:bg-surface-2"
                       }`}
                     >
@@ -236,7 +289,7 @@ export function DatePicker({
                     </span>
                   ))}
                 </div>
-                <div ref={gridRef} role="grid" onKeyDown={onGridKey} className="grid grid-cols-7 gap-y-1">
+                <div ref={gridRef} role="grid" onKeyDown={onGridKey} className="grid grid-cols-7 gap-y-0.5 sm:gap-y-1">
                   {cells.map((d, i) =>
                     d ? (
                       <button
@@ -248,7 +301,7 @@ export function DatePicker({
                         aria-pressed={selected ? sameDay(d, selected) : false}
                         aria-label={formatKorean(d)}
                         onClick={() => pick(d)}
-                        className={`num mx-auto flex size-10 items-center justify-center rounded-full text-[15px] font-medium transition-colors disabled:text-ink-2/35 sm:size-11 ${
+                        className={`num mx-auto flex size-9 items-center justify-center rounded-full text-[0.9375rem] font-medium transition-colors disabled:text-ink-2/35 sm:size-11 ${
                           selected && sameDay(d, selected)
                             ? "bg-ink text-bg"
                             : sameDay(d, today)
@@ -380,7 +433,7 @@ export function SelectField({
       </button>
 
       {open && (
-        <div className="pop-in absolute left-0 right-0 top-[calc(100%+8px)] z-30 origin-top overflow-hidden rounded-2xl bg-surface shadow-[0_12px_40px_-8px_rgb(0_0_0/0.28)] ring-1 ring-line">
+        <FloatingPanel label={label} role="presentation" cap={288} className="p-1.5">
           <ul
             ref={listRef}
             id={listId}
@@ -388,7 +441,7 @@ export function SelectField({
             aria-label={label}
             tabIndex={-1}
             aria-activedescendant={`${listId}-${active}`}
-            className="max-h-72 overflow-y-auto p-1.5 outline-none"
+            className="outline-none"
           >
             {options.map((o, i) => {
               const isSelected = o.value === value;
@@ -401,7 +454,7 @@ export function SelectField({
                   aria-selected={isSelected}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choose(i)}
-                  className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl px-3.5 text-[16px] ${
+                  className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-xl px-3.5 text-[1rem] ${
                     i === active ? "bg-surface-2" : ""
                   } ${isSelected ? "font-bold" : "font-medium"}`}
                 >
@@ -411,7 +464,7 @@ export function SelectField({
               );
             })}
           </ul>
-        </div>
+        </FloatingPanel>
       )}
     </div>
   );

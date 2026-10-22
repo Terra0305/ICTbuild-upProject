@@ -20,7 +20,7 @@ export function AuthShell({
   footer: ReactNode;
 }) {
   return (
-    <main className="mx-auto grid w-full max-w-5xl flex-1 grid-cols-[minmax(0,1fr)] gap-10 px-4 py-10 sm:px-6 md:grid-cols-2 md:items-center md:gap-16 md:py-16">
+    <main id="main" className="mx-auto grid w-full max-w-5xl 2xl:max-w-6xl flex-1 grid-cols-[minmax(0,1fr)] gap-10 px-4 py-10 sm:px-6 md:grid-cols-2 md:items-center md:gap-16 md:py-16">
       <div className="fade-up order-2 hidden md:order-1 md:block">
         <h2 className="text-3xl font-bold">
           잃어버린 순간부터
@@ -33,7 +33,7 @@ export function AuthShell({
               <span className="flex size-11 items-center justify-center rounded-full bg-surface-2 text-ink">
                 <Icon />
               </span>
-              <span className="text-[15px] font-medium">{text}</span>
+              <span className="text-[0.9375rem] font-medium">{text}</span>
             </li>
           ))}
         </ul>

@@ -47,7 +47,7 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
   }, [id, router]);
 
   return (
-    <PageShell>
+    <PageShell width="max-w-3xl lg:max-w-4xl">
       <PageHeader
         back={
           <Link
@@ -95,7 +95,10 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
               className="overflow-hidden rounded-2xl bg-surface shadow-card"
             >
               <div className="flex">
-                <div className="hidden w-28 shrink-0 items-center justify-center bg-surface-2 sm:flex">
+                <div className="relative hidden w-28 shrink-0 items-center justify-center bg-surface-2 sm:flex">
+                  <span className="num absolute left-3 top-3 flex size-7 items-center justify-center rounded-full bg-ink text-xs font-bold text-bg">
+                    {index + 1}
+                  </span>
                   {item.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.imageUrl} alt="" className="size-full object-cover" loading="lazy" />
@@ -104,9 +107,7 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
                   )}
                 </div>
                 <div className="min-w-0 flex-1 p-4 sm:p-5">
-                  <p className="num text-xs font-bold text-ink">
-                    {index + 1}순위
-                  </p>
+                  <p className="num text-xs font-bold text-ink sm:sr-only">{index + 1}순위</p>
                   <h2 className="mt-1 text-lg font-bold leading-snug">{item.title}</h2>
                   <div className="mt-2 flex flex-col gap-1 text-sm text-ink-2">
                     <span className="inline-flex items-center gap-1.5">

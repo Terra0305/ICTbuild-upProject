@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    .bg { fill: #000; }
+    .fg { stroke: #fff; }
+    .dot { fill: #fff; }
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #fff; }
+      .fg { stroke: #000; }
+      .dot { fill: #000; }
+    }
+  </style>
+  <rect class="bg" width="32" height="32" rx="7"/>
+  <path class="fg" d="M4.500 9.500A3.500 3.500 0 0 1 8 6h10.500l9 10-9 10H8a3.500 3.500 0 0 1-3.500-3.500z" transform="translate(16 16) scale(.8) translate(-16 -16)" fill="none" stroke-width="2.800" stroke-linejoin="round"/>
+  <circle class="dot" cx="12.800" cy="16" r="1.900"/>
+</svg>

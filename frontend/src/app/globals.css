@@ -2,6 +2,11 @@
 
 /* ReFind — claim-tag world. Tokens first; components read these, never raw hex. */
 :root {
+  color-scheme: light;
+  /* Motion: strong custom curves (built-in easings are too weak). */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.06), 0 14px 32px -12px rgb(0 0 0 / 0.18);
   /* iOS grouped-background system, monochrome. */
   --bg: #f2f2f7;
   --surface: #ffffff;
@@ -28,7 +33,8 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #000000;
     --surface: #1c1c1e;
     --surface-2: #2c2c2e;
@@ -52,6 +58,32 @@
     --danger-soft: #3d1217;
     --shadow: 0 0.5px 1px rgb(0 0 0 / 0.5);
   }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #2c2c2e;
+  --ink: #ffffff;
+  --ink-2: #a1a1a6;
+  --line: rgb(84 84 88 / 0.5);
+  --brand: #ffffff;
+  --brand-strong: #ffffff;
+  --brand-ink: #000000;
+  --brand-soft: #2c2c2e;
+  --shell: rgb(22 22 24 / 0.8);
+  --shell-ink: #ffffff;
+  --shell-ink-2: #a1a1a6;
+  --tag: #ffffff;
+  --tag-ink: #000000;
+  --ok: #30d158;
+  --ok-soft: #12301b;
+  --warn: #ffb340;
+  --warn-soft: #3a2a08;
+  --danger: #ff6b7a;
+  --danger-soft: #3d1217;
+  --shadow: 0 0.5px 1px rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
@@ -83,54 +115,85 @@
 
 html {
   background: var(--bg);
+  overflow-x: clip;
   scrollbar-color: var(--line) transparent;
+}
+
+/* Large screens: scale the whole rem-based UI instead of leaving it small in a sea of space. */
+@media (min-width: 1920px) {
+  html {
+    font-size: 112.5%;
+  }
+}
+@media (min-width: 2560px) {
+  html {
+    font-size: 131.25%;
+  }
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.6;
   word-break: keep-all;
   overflow-wrap: break-word;
   -webkit-text-size-adjust: 100%;
 }
 
-h1,
-h2,
-h3 {
-  text-wrap: balance;
-  letter-spacing: -0.025em;
-  line-height: 1.25;
-}
+/* Base rules live in the base layer so Tailwind utilities (truncate, focus:outline-none, rounded-full) can override them. */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.025em;
+    line-height: 1.25;
+  }
 
-p {
-  text-wrap: pretty;
-}
+  p {
+    text-wrap: pretty;
+  }
 
-::selection {
-  background: var(--tag);
-  color: var(--tag-ink);
-}
+  a,
+  button,
+  summary,
+  [role="button"],
+  [role="option"],
+  input,
+  select,
+  textarea,
+  label {
+    touch-action: manipulation;
+  }
 
-:focus-visible {
-  outline: 3px solid color-mix(in srgb, var(--ink) 45%, transparent);
-  outline-offset: 2px;
-  border-radius: 6px;
-}
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-input,
-select,
-textarea {
-  color: var(--ink);
-  caret-color: var(--brand);
-}
+  ::selection {
+    background: var(--tag);
+    color: var(--tag-ink);
+  }
 
-input::placeholder,
-textarea::placeholder {
-  color: var(--ink-2);
-  opacity: 0.7;
+  :focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--ink) 45%, transparent);
+    outline-offset: 2px;
+  }
+
+  input,
+  select,
+  textarea {
+    color: var(--ink);
+    caret-color: var(--brand);
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--ink-2);
+    opacity: 0.7;
+  }
 }
 
 .num {
@@ -159,7 +222,7 @@ textarea::placeholder {
   }
 }
 .print-in {
-  animation: print-in 640ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: print-in 600ms var(--ease-drawer) both;
 }
 
 @keyframes fade-up {
@@ -168,8 +231,19 @@ textarea::placeholder {
     transform: translateY(8px);
   }
 }
+/* Step changes happen often: shorter and shallower than a page entrance. */
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.step-in {
+  animation: step-in 240ms var(--ease-out) both;
+}
+
 .fade-up {
-  animation: fade-up 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-up 360ms var(--ease-out) both;
 }
 
 @keyframes shimmer {
@@ -187,12 +261,12 @@ textarea::placeholder {
 /* Scroll reveal: content is visible by default; JS arms it only for off-screen blocks. */
 .reveal[data-armed="true"] {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(14px);
 }
 .reveal {
   transition:
-    opacity 600ms cubic-bezier(0.32, 0.72, 0, 1),
-    transform 600ms cubic-bezier(0.32, 0.72, 0, 1);
+    opacity 520ms var(--ease-out),
+    transform 520ms var(--ease-out);
   transition-delay: var(--reveal-delay, 0ms);
 }
 .reveal[data-armed="true"][data-shown="true"] {
@@ -208,7 +282,7 @@ textarea::placeholder {
   }
 }
 .rise {
-  animation: rise 700ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: rise 620ms var(--ease-out) both;
   animation-delay: var(--d, 0ms);
 }
 
@@ -268,23 +342,24 @@ a:hover > .logo-mark {
 }
 
 /* Landing: sections behave like full-screen panels the page snaps between. */
-html:has(.snap-page) {
-  scroll-snap-type: y proximity;
-  scroll-padding-top: 3.5rem;
+/* Sections read as panels through their own full-height bands and alternating grounds.
+   No scroll-snap: proximity snapping yanks the page mid-gesture and fights scrubbed motion. */
+html {
+  scroll-padding-top: 4.5rem;
 }
+
 .snap-section {
-  scroll-snap-align: start;
-  min-height: min(calc(100svh - 3.5rem), 50rem);
+  min-height: min(calc(100svh - 3.5rem), 40rem);
 }
 
 @keyframes pop-in {
   from {
     opacity: 0;
-    transform: translateY(-6px) scale(0.98);
+    transform: translateY(-4px) scale(0.96);
   }
 }
 .pop-in {
-  animation: pop-in 180ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: pop-in 200ms var(--ease-out) both;
 }
 
 @keyframes toast-in {
@@ -294,7 +369,7 @@ html:has(.snap-page) {
   }
 }
 .toast-in {
-  animation: toast-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: toast-in 360ms var(--ease-drawer) both;
 }
 @keyframes toast-timer {
   from {
@@ -317,12 +392,100 @@ html:has(.snap-page) {
   }
 }
 
+/* Exit: faster and quieter than enter (150-200ms). */
+.toast-out {
+  opacity: 0;
+  transform: translateX(16px) scale(0.98);
+  transition:
+    opacity 180ms var(--ease-out),
+    transform 180ms var(--ease-out);
+}
+@media (max-width: 639px) {
+  .toast-out {
+    transform: translateY(-12px) scale(0.98);
+  }
+}
+
+/* Dialog: backdrop fades, sheet scales from just below full size. Modals stay center-origin. */
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+.backdrop-in {
+  animation: backdrop-in 200ms var(--ease-out) both;
+}
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+.sheet-in {
+  animation: sheet-in 260ms var(--ease-drawer) both;
+}
+
+/* Cards: lift on hover (fine pointers only), press down on tap. */
+.card-lift {
+  transition:
+    transform 240ms var(--ease-out),
+    box-shadow 240ms var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .card-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lift);
+  }
+}
+.card-lift:active {
+  transform: scale(0.99);
+  transition-duration: 120ms;
+}
+
+/* Theme switch: colors cross-fade once instead of snapping. */
+html.theme-fade,
+html.theme-fade *,
+html.theme-fade *::before,
+html.theme-fade *::after {
+  transition:
+    background-color 260ms var(--ease-out),
+    border-color 260ms var(--ease-out),
+    color 260ms var(--ease-out),
+    fill 260ms var(--ease-out),
+    stroke 260ms var(--ease-out) !important;
+}
+
+/* Segmented control: the thumb slides between options. */
+.seg-thumb {
+  transition: transform 300ms var(--ease-drawer);
+}
+
+/* Skip link */
+.skip-link {
+  position: fixed;
+  left: 1rem;
+  top: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 9999px;
+  background: var(--ink);
+  color: var(--bg);
+  padding: 0.625rem 1.125rem;
+  font-weight: 600;
+  transition: transform 200ms var(--ease-out);
+}
+.skip-link:focus-visible {
+  transform: none;
+}
+
 /* Category marquee */
 .marquee {
   overflow: hidden;
+  contain: layout paint;
   mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
 }
 .marquee-track {
+  will-change: transform;
   display: flex;
   width: max-content;
   gap: 0.5rem;
@@ -338,7 +501,9 @@ html:has(.snap-page) {
   }
 }
 
-/* ---- Scroll-linked motion (vars set by ScrollEffects) ---- */
+/* ---- Scroll-linked motion ----
+   Native scroll/view timelines run off the main thread (no per-scroll JS). Browsers without them
+   fall back to the JS in ScrollEffects / ScrollLine, which writes transforms straight to the elements. */
 .scroll-progress {
   position: fixed;
   inset: 0 0 auto 0;
@@ -346,20 +511,77 @@ html:has(.snap-page) {
   height: 2px;
   background: var(--ink);
   transform-origin: left;
-  transform: scaleX(var(--progress, 0));
+  transform: scaleX(0);
+  will-change: transform;
   pointer-events: none;
 }
 
 .site-header {
-  transition: box-shadow 300ms ease;
+  transition: box-shadow 300ms var(--ease-out);
 }
 html[data-scrolled="true"] .site-header {
   box-shadow: 0 8px 24px -14px rgb(0 0 0 / 0.35);
 }
 
 .hero-copy {
-  transform: translateY(calc(var(--scroll, 0) * 0.14px));
-  opacity: clamp(0, calc(1 - var(--scroll, 0) / 560), 1);
+  will-change: transform, opacity;
+}
+
+@keyframes progress-grow {
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes hero-away {
+  to {
+    transform: translateY(64px);
+    opacity: 0;
+  }
+}
+@keyframes line-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes reveal-scrub {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-progress {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+  .hero-copy {
+    animation: hero-away linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 6vh 80vh;
+  }
+  .scroll-line {
+    animation: line-draw linear both;
+    animation-timeline: view(block);
+    animation-range: entry 20% cover 78%;
+  }
+  /* Reveals are scrubbed by scroll position: smooth, reversible, never "late". */
+  .reveal[data-armed="true"] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: reveal-scrub both;
+    animation-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+    animation-timeline: view(block);
+    animation-range: cover 0px cover 240px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -371,9 +593,14 @@ html[data-scrolled="true"] .site-header {
     transition-duration: 0.01ms !important;
   }
   .hero-copy,
-  .scroll-progress {
+  .reveal[data-armed="true"] {
+    animation: none !important;
     transform: none !important;
     opacity: 1 !important;
+  }
+  .scroll-line {
+    animation: none !important;
+    transform: scaleY(1) !important;
   }
   .scroll-progress {
     display: none;
@@ -386,5 +613,9 @@ html[data-scrolled="true"] .site-header {
   }
   .toast-timer {
     display: none;
+  }
+  .seg-thumb,
+  .card-lift {
+    transition: none;
   }
 }

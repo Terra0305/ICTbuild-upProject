@@ -48,7 +48,7 @@ export function CountUp({
           timer = window.setTimeout(run, delay);
         }
       },
-      { threshold: 0.4 },
+      { rootMargin: "0px 0px -160px 0px", threshold: 0.2 },
     );
     io.observe(el);
     return () => {

@@ -59,13 +59,13 @@ export default function NotificationsPage() {
   }
 
   return (
-    <PageShell>
+    <PageShell width="max-w-3xl lg:max-w-4xl">
       <PageHeader
         title="알림"
         description={unread > 0 ? `새 알림 ${unread}건이 있어요.` : "새 매칭 후보가 생기면 여기에 알려드려요."}
         action={
           unread > 0 ? (
-            <Button variant="secondary" onClick={readAll} className="min-h-10 px-4 text-[15px]">
+            <Button variant="secondary" onClick={readAll} className="min-h-10 px-4 text-[0.9375rem]">
               모두 읽음
             </Button>
           ) : undefined
@@ -112,11 +112,11 @@ export default function NotificationsPage() {
                 )}
               </span>
               <div className="min-w-0 flex-1">
-                <p className={`text-[15px] ${group.unread ? "font-bold" : "font-medium text-ink-2"}`}>
+                <p className={`text-[0.9375rem] ${group.unread ? "font-bold" : "font-medium text-ink-2"}`}>
                   새로운 매칭 후보가 등록되었어요
                 </p>
-                <p className="mt-2 truncate text-[17px] font-bold">{lost?.title ?? "내 분실물"}</p>
-                {meta && <p className="mt-0.5 truncate text-sm text-ink-2">{meta}</p>}
+                <p className="mt-2 line-clamp-2 text-[1.0625rem] font-bold">{lost?.title ?? "내 분실물"}</p>
+                {meta && <p className="mt-0.5 line-clamp-2 text-sm text-ink-2">{meta}</p>}
                 {match && (
                   <p className="mt-3 flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
                     <span className="min-w-0 flex-1 truncate font-medium">{match.foundTitle}</span>

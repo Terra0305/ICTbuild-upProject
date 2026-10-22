@@ -198,8 +198,12 @@ function matchesFor(lostId: string, store: Store) {
       const template = base.items[k % 3];
       base.items.push({ ...template, match_id: n.match_id });
     });
+  base.items = base.items.slice(0, 5);
   return base;
 }
+
+const MAX_DEV_NOTIFICATIONS = 10;
+const MAX_DEV_UNREAD = 3;
 
 export class DevMockMiss extends Error {}
 
@@ -272,9 +276,15 @@ export async function devMockFetch(path: string, method: string, body: unknown):
 
   if (path === "/notifications" && method === "GET") {
     // 개발용: 20초마다 새 알림이 도착한 것처럼 만들어 토스트를 확인할 수 있게 한다.
+    // 읽지 않은 알림이 계속 쌓여 배지가 끝없이 늘지 않도록 읽지 않은 게 적을 때만 만들고, 목록 길이도 제한한다.
     const newest = store.notifications.reduce((t, n) => Math.max(t, Date.parse(n.created_at)), 0);
+    const unreadCount = store.notifications.filter((n) => n.status !== "READ").length;
     const active = store.lost.filter((i) => i.status === "ACTIVE");
-    if (active.length > 0 && Date.now() - newest > 20_000) {
+    if (store.notifications.length > MAX_DEV_NOTIFICATIONS) {
+      store.notifications = store.notifications.slice(0, MAX_DEV_NOTIFICATIONS);
+      save(store);
+    }
+    if (active.length > 0 && unreadCount < MAX_DEV_UNREAD && Date.now() - newest > 20_000) {
       const target = active[Math.floor(Math.random() * active.length)];
       const now = new Date().toISOString();
       store.notifications.unshift({

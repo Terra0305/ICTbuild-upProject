@@ -48,12 +48,13 @@ export default function Home() {
 
   return (
     <div className="snap-page flex flex-1 flex-col">
+      <main id="main">
       {/* 1. Hero */}
       <section className="snap-section flex flex-col bg-surface">
         <div className="flex flex-1 items-center">
-          <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-12">
+          <div className="mx-auto grid w-full max-w-5xl 2xl:max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 py-12 sm:px-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] md:gap-12">
             <div className="hero-copy">
-              <h1 className="text-[2rem] font-bold leading-[1.2] sm:text-5xl">
+              <h1 className="text-[2rem] font-bold leading-[1.2] sm:text-5xl lg:text-6xl">
                 <span className="rise block" style={{ ["--d" as string]: "0ms" }}>
                   잃어버린 물건,
                 </span>
@@ -62,7 +63,7 @@ export default function Home() {
                 </span>
               </h1>
               <p
-                className="rise mt-5 max-w-md text-[17px] leading-relaxed text-ink-2 sm:text-lg"
+                className="rise mt-5 max-w-md text-[1.0625rem] leading-relaxed text-ink-2 sm:text-lg"
                 style={{ ["--d" as string]: "220ms" }}
               >
                 물건 정보를 등록하면 경찰청 LOST112 공공 습득물과 자동으로 비교해 가능성이 높은 후보를 보여드려요.
@@ -77,7 +78,7 @@ export default function Home() {
                 </LinkButton>
                 <Link
                   href="/login"
-                  className="inline-flex min-h-14 items-center justify-center rounded-full px-6 text-[17px] font-semibold text-ink hover:bg-ink/5"
+                  className="inline-flex min-h-14 items-center justify-center rounded-full px-6 text-[1.0625rem] font-semibold text-ink hover:bg-ink/5"
                 >
                   이미 등록했어요 · 로그인
                 </Link>
@@ -122,7 +123,7 @@ export default function Home() {
                     style={{ animationDelay: `${(i + 1) * 160}ms`, opacity: 1 - (i + 1) * 0.18 }}
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-[15px] font-semibold">{r.title}</p>
+                      <p className="truncate text-[0.9375rem] font-semibold">{r.title}</p>
                       <p className="mt-0.5 truncate text-xs text-ink-2">{r.meta}</p>
                     </div>
                     <span className="num text-2xl font-bold">{r.score}</span>
@@ -156,25 +157,25 @@ export default function Home() {
 
       {/* 2. Steps */}
       <section className="snap-section flex items-center bg-bg">
-        <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-16 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-16">
+        <div className="mx-auto grid w-full max-w-5xl 2xl:max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-16 sm:px-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] md:gap-16">
           <Reveal>
-            <h2 className="text-2xl font-bold sm:text-3xl">직접 뒤지지 않아도 돼요</h2>
-            <p className="mt-3 max-w-sm text-ink-2">
+            <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">직접 뒤지지 않아도 돼요</h2>
+            <p className="mt-3 max-w-sm text-ink-2 lg:mt-4 lg:text-lg">
               흩어진 습득물 목록을 일일이 검색하는 대신, 등록 한 번으로 비교와 감시를 맡기세요.
             </p>
           </Reveal>
-          <ol className="relative flex flex-col gap-8">
-            <span className="perf absolute bottom-6 left-6 top-6 w-0.5" aria-hidden="true" />
-            <ScrollLine className="absolute bottom-6 left-6 top-6 w-0.5 bg-ink" />
+          <ol className="relative flex flex-col gap-8 lg:gap-12">
+            <span className="perf absolute bottom-6 left-6 top-6 w-0.5 lg:bottom-7 lg:left-7 lg:top-7" aria-hidden="true" />
+            <ScrollLine className="absolute bottom-6 left-6 top-6 w-0.5 bg-ink lg:bottom-7 lg:left-7 lg:top-7" />
             {STEPS.map(({ icon: Icon, title, body }, i) => (
               <li key={title} className="relative">
                 <Reveal delay={i * 120} className="flex gap-5">
-                  <span className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full bg-ink text-bg ring-8 ring-bg">
+                  <span className="relative z-10 flex size-12 shrink-0 items-center justify-center rounded-full bg-ink text-bg ring-8 ring-bg lg:size-14">
                     <Icon />
                   </span>
                   <div className="pt-1">
-                    <h3 className="text-lg font-bold">{title}</h3>
-                    <p className="mt-1.5 text-[15px] text-ink-2">{body}</p>
+                    <h3 className="text-lg font-bold lg:text-xl">{title}</h3>
+                    <p className="mt-1.5 text-[0.9375rem] text-ink-2 lg:mt-2 lg:text-base">{body}</p>
                   </div>
                 </Reveal>
               </li>
@@ -185,10 +186,10 @@ export default function Home() {
 
       {/* 3. Bento: what you get */}
       <section className="snap-section flex items-center bg-surface">
-        <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6">
+        <div className="mx-auto w-full max-w-5xl 2xl:max-w-6xl px-4 py-16 sm:px-6">
           <Reveal>
-            <h2 className="text-2xl font-bold sm:text-3xl">등록하면 이런 걸 받아요</h2>
-            <p className="mt-3 max-w-md text-ink-2">후보 목록부터 알림까지, 찾는 데 필요한 것만 담았어요.</p>
+            <h2 className="text-2xl font-bold sm:text-3xl lg:text-4xl">등록하면 이런 걸 받아요</h2>
+            <p className="mt-3 max-w-md text-ink-2 lg:text-lg">후보 목록부터 알림까지, 찾는 데 필요한 것만 담았어요.</p>
           </Reveal>
 
           <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-6">
@@ -204,7 +205,7 @@ export default function Home() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-[15px] font-semibold">{r.title}</span>
+                        <span className="truncate text-[0.9375rem] font-semibold">{r.title}</span>
                         <span className="num text-sm font-bold">
                           <CountUp value={r.score} delay={i * 80} />
                         </span>
@@ -222,14 +223,17 @@ export default function Home() {
             {/* Notification banner */}
             <Reveal delay={80} className="rounded-3xl bg-ink p-6 text-bg md:col-span-2">
               <p className="text-lg font-bold">새 후보가 생기면 바로</p>
-              <div className="mt-5 rounded-2xl bg-bg/15 p-4 backdrop-blur">
-                <div className="flex items-center gap-2 text-xs opacity-80">
-                  <LogoMark size={16} />
-                  <span className="font-semibold">ReFind</span>
+              <div className="mt-5 rounded-2xl bg-surface p-4 text-ink shadow-[0_8px_24px_-8px_rgb(0_0_0/0.5)]">
+                <div className="flex items-center gap-2 text-xs text-ink-2">
+                  <LogoMark size={18} />
+                  <span className="font-bold text-ink">ReFind</span>
                   <span className="ml-auto">지금</span>
                 </div>
-                <p className="mt-2 text-sm font-semibold">새로운 매칭 후보가 등록되었어요</p>
-                <p className="mt-0.5 text-xs opacity-80">검정 가죽 카드지갑 · 82점</p>
+                <p className="mt-2 text-sm font-bold">새로운 매칭 후보가 등록되었어요</p>
+                <p className="mt-0.5 flex items-center justify-between gap-2 text-xs text-ink-2">
+                  <span className="truncate">검정 가죽 카드지갑</span>
+                  <span className="num shrink-0 rounded-full bg-ink px-2 py-0.5 font-bold text-bg">82점</span>
+                </p>
               </div>
             </Reveal>
 
@@ -278,18 +282,18 @@ export default function Home() {
 
       {/* 4. Honesty */}
       <section className="snap-section flex items-center bg-bg">
-        <div className="mx-auto grid w-full max-w-5xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:gap-16 md:py-20">
+        <div className="mx-auto grid w-full max-w-5xl 2xl:max-w-6xl grid-cols-[minmax(0,1fr)] gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 md:gap-16 md:py-20">
           <Reveal>
             <div className="flex items-center gap-2">
               <IconShield />
               <span className="text-sm font-bold">점수를 정직하게 보여드려요</span>
             </div>
-            <h2 className="mt-3 text-2xl font-bold sm:text-3xl">
+            <h2 className="mt-3 text-2xl font-bold sm:text-3xl lg:text-4xl">
               점수는 확률이 아니라
               <br />
               닮은 정도예요
             </h2>
-            <p className="mt-4 text-ink-2">
+            <p className="mt-4 text-ink-2 lg:text-lg">
               여러 기준의 유사도를 합친 값이라 100점이어도 내 물건이라고 확정할 수는 없어요. 후보마다 어떤 점이 닮았는지
               근거를 함께 보여드리니, 보관 기관에 문의하기 전에 직접 비교해보세요.
             </p>
@@ -322,14 +326,14 @@ export default function Home() {
 
       {/* 5. Closing */}
       <section className="snap-section flex items-center bg-ink text-bg">
-        <div className="mx-auto w-full max-w-5xl px-4 py-16 text-center sm:px-6">
+        <div className="mx-auto w-full max-w-5xl 2xl:max-w-6xl px-4 py-16 text-center sm:px-6">
           <Reveal>
-            <h2 className="text-2xl font-bold sm:text-4xl">시간이 지날수록 찾기 어려워져요</h2>
-            <p className="mx-auto mt-3 max-w-md text-bg/70">
+            <h2 className="text-2xl font-bold sm:text-4xl lg:text-5xl">시간이 지날수록 찾기 어려워져요</h2>
+            <p className="mx-auto mt-3 max-w-md text-bg/70 lg:mt-4 lg:text-lg">
               기억이 또렷한 지금 바로 등록해두면, 나머지는 ReFind가 지켜볼게요.
             </p>
             <div className="mt-8 flex justify-center">
-              <Link href="/lost/new" className={buttonClass("secondary", "min-h-14 bg-bg px-8 text-ink hover:brightness-100 hover:opacity-90")}>
+              <Link href="/lost/new" className={buttonClass("secondary", "min-h-14 bg-bg px-8 text-ink hover:brightness-100 hover:opacity-90 lg:min-h-16 lg:px-10 lg:text-lg")}>
                 분실물 등록하기
                 <IconArrow width={18} height={18} />
               </Link>
@@ -337,6 +341,8 @@ export default function Home() {
           </Reveal>
         </div>
       </section>
+
+      </main>
 
       <footer className="snap-end mt-auto border-t border-line px-4 py-8 text-center text-xs text-ink-2 sm:px-6">
         ReFind · 경찰청 LOST112 공공데이터 기반 분실물 매칭 서비스

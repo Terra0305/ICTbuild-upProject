@@ -5,6 +5,7 @@ import "./globals.css";
 import { NotificationProvider } from "@/components/common/NotificationProvider";
 import { ScrollEffects } from "@/components/common/ScrollEffects";
 import { SiteHeader } from "@/components/common/SiteHeader";
+import { THEME_INIT_SCRIPT } from "@/components/common/ThemeToggle";
 
 const notoKr = Noto_Sans_KR({
   variable: "--font-noto-kr",
@@ -36,8 +37,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${notoKr.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="ko" suppressHydrationWarning className={`${notoKr.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
+        <a href="#main" className="skip-link">본문으로 건너뛰기</a>
         <NotificationProvider>
           <ScrollEffects />
           <SiteHeader />

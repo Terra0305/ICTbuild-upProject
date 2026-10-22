@@ -14,6 +14,8 @@ export function ScrollLine({ className = "" }: { className?: string }) {
       el.style.transform = "scaleY(1)";
       return;
     }
+    // 네이티브 view 타임라인이 있으면 CSS(.scroll-line)가 그린다.
+    if (CSS.supports("animation-timeline: view()")) return;
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -35,5 +37,5 @@ export function ScrollLine({ className = "" }: { className?: string }) {
     };
   }, []);
 
-  return <span ref={ref} aria-hidden="true" className={`origin-top ${className}`} style={{ transform: "scaleY(0)" }} />;
+  return <span ref={ref} aria-hidden="true" className={`scroll-line origin-top ${className}`} style={{ transform: "scaleY(0)" }} />;
 }

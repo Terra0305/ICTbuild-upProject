@@ -192,7 +192,7 @@ export default function NewLostItemPage() {
               <ClaimCode id={createdId} />
             </p>
           )}
-          <p className="mt-4 text-[15px] text-ink-2">
+          <p className="mt-4 text-[0.9375rem] text-ink-2">
             경찰청 습득물과 비교해 추천 후보를 찾고 있어요. 새 습득물이 올라오면 알림으로 알려드릴게요.
           </p>
           <div className="mt-8 flex flex-col gap-3">
@@ -220,7 +220,9 @@ export default function NewLostItemPage() {
   ];
 
   return (
-    <PageShell width="max-w-xl">
+    <PageShell width="max-w-xl lg:max-w-5xl">
+      <div className="lg:grid lg:grid-cols-[minmax(0,34rem)_minmax(0,1fr)] lg:gap-14">
+      <div>
       <nav aria-label="진행 단계" className="mb-8">
         <ol className="flex items-start gap-1.5">
           {STEP_LABELS.map((label, index) => (
@@ -244,12 +246,12 @@ export default function NewLostItemPage() {
         </ol>
       </nav>
 
-      <h1 key={`title-${step}`} className="fade-up text-2xl font-bold sm:text-3xl">{STEP_TITLES[step]}</h1>
+      <h1 key={`title-${step}`} className="step-in text-2xl font-bold sm:text-3xl">{STEP_TITLES[step]}</h1>
       <p className="mt-2 text-sm text-ink-2">
         {step === 3 ? "내용이 맞다면 등록해주세요. 등록 후에도 추천 후보는 계속 업데이트돼요." : "선택이라고 적힌 항목은 비워둬도 괜찮아요."}
       </p>
 
-      <div key={`card-${step}`} className="fade-up mt-8 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
+      <div key={`card-${step}`} className="step-in relative z-10 mt-8 rounded-2xl bg-surface p-5 shadow-card sm:p-7">
         {step === 0 && (
           <div className="flex flex-col gap-7">
             <Field label="물품명" hint="2~100자" htmlFor="title">
@@ -397,7 +399,7 @@ export default function NewLostItemPage() {
               ) : (
                 <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl bg-surface-2 px-4 py-8 text-center transition-colors hover:brightness-95 focus-within:ring-4 focus-within:ring-ink/10">
                   <IconImage width={28} height={28} className="text-ink" />
-                  <span className="text-[15px] font-semibold">사진 올리기</span>
+                  <span className="text-[0.9375rem] font-semibold">사진 올리기</span>
                   <span className="text-sm text-ink-2">사진이 있으면 비슷한 습득물을 더 정확히 찾아요</span>
                   <input
                     type="file"
@@ -420,7 +422,7 @@ export default function NewLostItemPage() {
                   수정
                 </button>
               </div>
-              <dl className="divide-y divide-line px-4 text-[15px]">
+              <dl className="divide-y divide-line px-4 text-[0.9375rem]">
                 <Summary label="물품명" value={form.title || "-"} />
                 <Summary label="종류" value={categoryLabel} />
                 <Summary label="색상" value={colorLabels.join(", ") || "-"} />
@@ -454,6 +456,44 @@ export default function NewLostItemPage() {
             {submitting ? "등록 중..." : "분실물 등록하기"}
           </Button>
         )}
+      </div>
+      </div>
+
+      <aside className="hidden lg:block" aria-label="등록 미리보기">
+        <div className="sticky top-24">
+          <p className="mb-3 text-sm font-semibold text-ink-2">이렇게 등록돼요</p>
+          <div className="overflow-hidden rounded-2xl bg-surface shadow-card">
+            <div className="flex aspect-[16/9] items-center justify-center bg-surface-2">
+              {previewUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={previewUrl} alt="" className="size-full object-cover" />
+              ) : (
+                <IconImage className="text-ink-2/60" width={32} height={32} />
+              )}
+            </div>
+            <div className="p-5">
+              <span className="num rounded-md bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-2">RF-NEW</span>
+              <p className={`mt-3 text-xl font-bold leading-snug ${form.title ? "" : "text-ink-2/60"}`}>
+                {form.title || "물품명을 입력해주세요"}
+              </p>
+              <p className="mt-1 text-sm text-ink-2">
+                {[form.categoryCode ? categoryLabel : "", REGION_OPTIONS.find((r) => r.code === form.regionCode)?.label, form.lostDate]
+                  .filter(Boolean)
+                  .join(" · ") || "종류 · 지역 · 날짜"}
+              </p>
+              {form.colorCodes.length > 0 && (
+                <p className="mt-3 flex items-center gap-1.5">
+                  {form.colorCodes.slice(0, 6).map((c) => (
+                    <Swatch key={c} code={c} size={16} />
+                  ))}
+                  <span className="ml-1 text-sm text-ink-2">{colorLabels.join(", ")}</span>
+                </p>
+              )}
+              {form.description && <p className="mt-3 line-clamp-3 text-sm text-ink-2">{form.description}</p>}
+            </div>
+          </div>
+        </div>
+      </aside>
       </div>
     </PageShell>
   );

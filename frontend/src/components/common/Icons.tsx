@@ -118,15 +118,15 @@ export const IconAlert = (p: SVGProps<SVGSVGElement>) => (
 
 export function LogoMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="logo-mark">
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className="logo-mark" style={{ color: "var(--ink)" }}>
       <path
         d="M4.500 9.500A3.500 3.500 0 0 1 8 6h10.500l9 10-9 10H8a3.500 3.500 0 0 1-3.500-3.500z"
         fill="none"
-        stroke="var(--ink)"
+        stroke="currentColor"
         strokeWidth="2.400"
         strokeLinejoin="round"
       />
-      <circle cx="11" cy="16" r="2.200" fill="var(--ink)" />
+      <circle cx="11" cy="16" r="2.200" fill="currentColor" />
     </svg>
   );
 }
@@ -144,5 +144,17 @@ export const IconChevronLeft = (p: SVGProps<SVGSVGElement>) => (
 export const IconChevronRight = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}>
     <path d="m9 6 6 6-6 6" />
+  </svg>
+);
+
+export const IconSun = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="4" />
+    <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4" />
+  </svg>
+);
+export const IconMoon = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
   </svg>
 );

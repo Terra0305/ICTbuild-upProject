@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import { IconBell, IconList, IconLogout, IconPlus, LogoMark } from "@/components/common/Icons";
+import { ThemeToggle } from "@/components/common/ThemeToggle";
 import { useNotifications } from "@/components/common/NotificationProvider";
 import { clearTokens, isAuthenticated, subscribeAuthChange } from "@/lib/auth";
 
@@ -39,7 +40,7 @@ export function SiteHeader() {
     >
       {label}
       {badge > 0 && (
-        <span className="num ml-1.5 rounded-full bg-tag px-1.5 text-[11px] font-bold leading-5 text-tag-ink">
+        <span className="num ml-1.5 rounded-full bg-tag px-1.5 text-[0.6875rem] font-bold leading-5 text-tag-ink">
           {badge > 9 ? "9+" : badge}
         </span>
       )}
@@ -49,14 +50,15 @@ export function SiteHeader() {
   return (
     <>
       <header
-        className="site-header sticky top-0 z-40 border-b border-line bg-shell text-shell-ink backdrop-blur-xl backdrop-saturate-150"
+        className="site-header sticky top-0 z-40 border-b border-line bg-shell text-shell-ink backdrop-blur-md"
       >
-        <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2 text-[17px] font-bold tracking-tight">
+        <div className="mx-auto flex h-14 w-full max-w-5xl 2xl:max-w-6xl items-center justify-between px-4 sm:px-6">
+          <Link href="/" className="flex items-center gap-2 text-[1.0625rem] font-bold tracking-tight">
             <LogoMark />
             ReFind
           </Link>
           <nav aria-label="주 메뉴" className="flex items-center gap-1">
+            <ThemeToggle />
             {authed ? (
               <>
                 <div className="hidden items-center gap-1 md:flex">
@@ -103,7 +105,7 @@ export function SiteHeader() {
       {authed && (
         <nav
           aria-label="하단 메뉴"
-          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-shell pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 md:hidden"
+          className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-shell pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
         >
           <ul className="mx-auto grid max-w-md grid-cols-3">
             <li>
@@ -159,7 +161,7 @@ function TabLink({
       <span className="relative">
         {children}
         {badge > 0 && (
-          <span className="num absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-danger px-1 text-center text-[10px] font-bold leading-4 text-white">
+          <span className="num absolute -right-2.5 -top-1.5 min-w-4 rounded-full bg-danger px-1 text-center text-[0.625rem] font-bold leading-4 text-white">
             {badge > 9 ? "9+" : badge}
           </span>
         )}

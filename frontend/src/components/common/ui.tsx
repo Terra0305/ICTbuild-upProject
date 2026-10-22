@@ -18,7 +18,7 @@ const VARIANTS: Record<Variant, string> = {
 };
 
 const BUTTON_BASE =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-[17px] font-semibold transition-[background-color,filter,opacity,transform] duration-150 active:scale-[0.97] active:opacity-80 disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 text-[1.0625rem] font-semibold transition-[background-color,filter,opacity,transform] duration-[160ms] ease-[var(--ease-out)] active:scale-[0.97] active:opacity-80 disabled:pointer-events-none disabled:opacity-50";
 
 export function buttonClass(variant: Variant = "primary", extra = "") {
   return `${BUTTON_BASE} ${VARIANTS[variant]} ${extra}`.trim();
@@ -55,13 +55,13 @@ export function LinkButton({
 
 export function PageShell({
   children,
-  width = "max-w-3xl",
+  width = "max-w-3xl lg:max-w-5xl 2xl:max-w-6xl",
 }: {
   children: ReactNode;
   width?: string;
 }) {
   return (
-    <main className={`fade-up mx-auto w-full ${width} flex-1 px-4 pb-28 pt-8 sm:px-6 sm:pt-12 md:pb-16`}>
+    <main id="main" className={`fade-up mx-auto w-full ${width} flex-1 px-4 pb-28 pt-8 sm:px-6 sm:pt-12 md:pb-16`}>
       {children}
     </main>
   );
@@ -84,7 +84,7 @@ export function PageHeader({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h1 className="text-[1.75rem] font-bold sm:text-3xl">{title}</h1>
-          {description && <p className="mt-2 max-w-prose text-[15px] text-ink-2">{description}</p>}
+          {description && <p className="mt-2 max-w-prose text-[0.9375rem] text-ink-2">{description}</p>}
         </div>
         {action}
       </div>
@@ -95,7 +95,7 @@ export function PageHeader({
 /* ---------- Form ---------- */
 
 const FIELD_BOX =
-  "min-h-12 w-full rounded-xl border border-transparent bg-surface-2 px-4 text-[17px] text-ink transition-colors focus:border-ink focus:bg-surface focus:outline-none focus:ring-4 focus:ring-ink/10 aria-[invalid=true]:border-danger";
+  "min-h-12 w-full rounded-xl border border-transparent bg-surface-2 px-4 text-[1.0625rem] text-ink transition-[border-color,background-color,box-shadow] duration-200 ease-[var(--ease-out)] focus:border-ink focus:bg-surface focus:outline-none focus:ring-4 focus:ring-ink/10 aria-[invalid=true]:border-danger";
 
 export const fieldClass = FIELD_BOX;
 
@@ -135,7 +135,7 @@ export function Chip({
       type="button"
       aria-pressed={selected}
       onClick={onClick}
-      className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-[15px] font-medium transition-colors ${
+      className={`inline-flex min-h-10 items-center gap-2 rounded-full px-4 text-[0.9375rem] font-medium transition-[background-color,color,filter,transform] duration-[160ms] ease-[var(--ease-out)] active:scale-[0.97] ${
         selected ? "bg-ink text-bg" : "bg-surface-2 text-ink hover:brightness-95"
       }`}
     >
@@ -219,7 +219,7 @@ const STATUS_STYLE: Record<LostItem["status"], { label: string; cls: string }> =
 export function StatusBadge({ status }: { status: LostItem["status"] }) {
   const s = STATUS_STYLE[status];
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${s.cls}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ${s.cls}`}>
       {status === "ACTIVE" && <span className="size-1.5 animate-pulse rounded-full bg-current" />}
       {s.label}
     </span>
@@ -241,11 +241,11 @@ export function ScoreStub({ score, label }: { score: number; label: ScoreLabel }
         high ? "bg-ink text-bg" : "bg-surface-2 text-ink"
       }`}
     >
-      <span className="text-[11px] font-bold leading-tight">매칭 점수</span>
+      <span className="text-[0.6875rem] font-bold leading-tight">매칭 점수</span>
       <span className="pop num text-3xl font-bold leading-none sm:text-4xl">
         <CountUp value={Math.round(score * 100)} duration={1100} delay={150} />
       </span>
-      <span className="text-[11px] font-bold leading-tight">{SCORE_COPY[label]}</span>
+      <span className="text-[0.6875rem] font-bold leading-tight">{SCORE_COPY[label]}</span>
     </div>
   );
 }

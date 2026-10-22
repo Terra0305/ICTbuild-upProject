@@ -30,7 +30,7 @@ export default function FoundItemDetailPage({ params }: { params: Promise<{ id: 
 
   if (error) {
     return (
-      <PageShell width="max-w-2xl">
+      <PageShell width="max-w-2xl lg:max-w-5xl 2xl:max-w-6xl">
         <Notice tone="error">{error}</Notice>
         <div className="mt-6">
           <LinkButton href="/lost" variant="secondary">
@@ -42,7 +42,7 @@ export default function FoundItemDetailPage({ params }: { params: Promise<{ id: 
   }
   if (!item) {
     return (
-      <PageShell width="max-w-2xl">
+      <PageShell width="max-w-2xl lg:max-w-5xl 2xl:max-w-6xl">
         <div className="skeleton h-10 w-2/3" />
         <div className="skeleton mt-6 h-64" />
       </PageShell>
@@ -55,14 +55,14 @@ export default function FoundItemDetailPage({ params }: { params: Promise<{ id: 
   const stored = item.status === "STORED" || item.status === "UNKNOWN";
 
   return (
-    <PageShell width="max-w-2xl">
+    <PageShell width="max-w-2xl lg:max-w-5xl 2xl:max-w-6xl">
       <Button variant="ghost" className="-ml-3 mb-3 min-h-10 px-3" onClick={() => router.back()}>
         <IconBack width={18} height={18} />
         돌아가기
       </Button>
 
-      <article className="overflow-hidden rounded-2xl bg-surface shadow-card">
-        <div className="flex aspect-[16/9] items-center justify-center bg-surface-2">
+      <article className="overflow-hidden rounded-2xl bg-surface shadow-card lg:grid lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="flex aspect-[16/9] items-center justify-center bg-surface-2 lg:aspect-auto lg:min-h-[22rem]">
           {item.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={item.imageUrl} alt={`${item.title} 사진`} className="size-full object-cover" />
@@ -94,7 +94,7 @@ export default function FoundItemDetailPage({ params }: { params: Promise<{ id: 
             <p className="mt-1 text-sm font-medium">{item.contactText ? `문의 ${item.contactText}` : "문의처 정보가 없어요. 보관 장소로 직접 문의해주세요."}</p>
           </div>
 
-          <dl className="mt-6 grid gap-x-8 gap-y-5 text-[15px] sm:grid-cols-2">
+          <dl className="mt-6 grid gap-x-8 gap-y-5 text-[0.9375rem] sm:grid-cols-2">
             <Info label="습득 날짜" value={item.foundDate} />
             <Info label="지역" value={region ?? "-"} />
             <Info label="습득 장소" value={item.placeText || "-"} wide />

@@ -299,30 +299,36 @@ function ToastCard({
 }) {
   const meta = lostItemMeta(lost);
   const [paused, setPaused] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const closeRef = useRef(onClose);
   useEffect(() => {
     closeRef.current = onClose;
   });
+  // 퇴장은 입장보다 빠르고 조용하게: 180ms 동안 사라진 뒤 제거한다.
+  const dismiss = useCallback(() => {
+    setLeaving(true);
+    window.setTimeout(() => closeRef.current(), 180);
+  }, []);
   // 마우스를 올리거나 키보드로 포커스하면 멈추고, 벗어나면 다시 시간을 센다.
   useEffect(() => {
     if (paused) return;
-    const timer = window.setTimeout(() => closeRef.current(), TOAST_MS);
+    const timer = window.setTimeout(dismiss, TOAST_MS);
     return () => window.clearTimeout(timer);
-  }, [paused]);
+  }, [paused, dismiss]);
   return (
     <div
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
-      className="toast-in group pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl bg-surface shadow-[0_12px_40px_-8px_rgb(0_0_0/0.3)] ring-1 ring-line">
+      className={`${leaving ? "toast-out" : "toast-in"} group pointer-events-auto relative w-full max-w-sm overflow-hidden rounded-2xl bg-surface shadow-[0_12px_40px_-8px_rgb(0_0_0/0.3)] ring-1 ring-line`}>
       <Link href={`/lost/${group.lostItemId}/matches`} onClick={onOpen} className="block p-4 pr-12">
         <div className="flex items-center gap-2 text-xs font-semibold text-ink-2">
           <IconBell width={16} height={16} className="text-ink" />
           <span>{toast.summaryCount && toast.summaryCount > 1 ? `읽지 않은 알림 ${toast.summaryCount}건` : "새 매칭 후보가 도착했어요"}</span>
         </div>
-        <p className="mt-2 truncate text-[17px] font-bold leading-snug">{lost?.title ?? "내 분실물"}</p>
-        {meta && <p className="mt-0.5 truncate text-sm text-ink-2">{meta}</p>}
+        <p className="mt-2 truncate text-[1.0625rem] font-bold leading-snug">{lost?.title ?? "내 분실물"}</p>
+        {meta && <p className="mt-0.5 line-clamp-2 text-sm text-ink-2">{meta}</p>}
         {match && (
           <p className="mt-3 flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-sm">
             <span className="min-w-0 flex-1 truncate font-medium">{match.foundTitle}</span>
@@ -333,7 +339,7 @@ function ToastCard({
       </Link>
       <button
         type="button"
-        onClick={onClose}
+        onClick={dismiss}
         aria-label="알림 닫기"
         className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink"
       >
