@@ -54,6 +54,13 @@ p.b { font-size: 30px; line-height: 1.55; }
 .tl .pt.later::after { background: var(--line); }
 .chip { display: inline-block; background: rgba(59,130,246,.12); color: var(--accent); font-weight: 700; font-size: 24px; padding: 8px 18px; border-radius: 6px; margin: 0 8px 10px 0; }
 .x { color: #B91C1C; font-weight: 800; }
+.cmp { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 0; border-top: 3px solid var(--text); }
+.cmp > div { padding: 22px 26px; border-bottom: 1px solid var(--line); font-size: 27px; line-height: 1.4; display: flex; align-items: center; }
+.cmp-h { font-size: 30px !important; font-weight: 800; color: var(--sub); }
+.cmp-h.hl { color: var(--accent); }
+.cmp-k { font-weight: 700; }
+.cmp-c { color: var(--sub); }
+.cmp-c.hl { color: var(--text); font-weight: 600; background: rgba(59,130,246,.07); }
 #downloadSection { text-align: center; padding: 40px; }
 #downloadBtn { font-family: var(--font-main); font-size: 22px; font-weight: 700; padding: 16px 40px; border-radius: 999px; border: 0; background: #1A1A1A; color: #fff; cursor: pointer; }
 #downloadBtn:disabled { opacity: .5; }
@@ -64,7 +71,7 @@ p.b { font-size: 30px; line-height: 1.55; }
 
 <div class="slide-nav" id="slideNav">
   <span>Slide Navigator</span>
-  <a href="#slide-1">1</a><a href="#slide-2">2</a><a href="#slide-3">3</a><a href="#slide-4">4</a><a href="#slide-5">5</a><a href="#slide-6">6</a><a href="#slide-7">7</a><a href="#slide-8">8</a><a href="#slide-9">9</a><a href="#slide-10">10</a><a href="#slide-11">11</a><a href="#slide-12">12</a><a href="#slide-13">13</a>
+  <a href="#slide-1">1</a><a href="#slide-2">2</a><a href="#slide-3">3</a><a href="#slide-4">4</a><a href="#slide-5">5</a><a href="#slide-6">6</a><a href="#slide-7">7</a><a href="#slide-8">8</a><a href="#slide-9">9</a><a href="#slide-10">10</a><a href="#slide-11">11</a><a href="#slide-12">12</a><a href="#slide-13">13</a><a href="#slide-14">14</a>
 </div>
 
 <!-- 1. Cover -->
@@ -97,7 +104,7 @@ p.b { font-size: 30px; line-height: 1.55; }
   </div>
   <p class="src" style="margin-top:30px;">출처: 서울교통공사 유실물 데이터(황희 의원 분석), The Herald Business, 2026.10.16 — 서울 지하철 기준</p>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">2 / 13</div>
+  <div class="slide-number">2 / 14</div>
 </div>
 
 <!-- 3. 기존 방식의 한계 -->
@@ -109,11 +116,28 @@ p.b { font-size: 30px; line-height: 1.55; }
     <div class="col card"><div class="big" style="font-size:90px;">03</div><h3 style="margin-top:20px;">나중에 올라온 건 모름</h3><p class="b mut">내 물건이 내일 등록돼도<br>다시 검색하기 전엔 알 수 없음</p></div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">3 / 13</div>
+  <div class="slide-number">3 / 14</div>
 </div>
 
-<!-- 4. 해결 -->
+<!-- 4. 기존 방식 vs ReFind -->
 <div class="slide" id="slide-4">
+  <h2 class="slide-title">ReFind는 새 데이터가 아니라 '찾는 방식'을 바꿉니다</h2>
+  <p style="font-size:30px; margin-bottom:34px;" class="mut">데이터는 경찰청 LOST112 공공데이터 그대로, 그 위에 <span class="acc" style="font-weight:800;">매칭 계층</span>을 더합니다. 대체가 아니라 보완입니다.</p>
+  <div class="cmp">
+    <div class="cmp-h"></div><div class="cmp-h">기존 조건 검색</div><div class="cmp-h hl">ReFind</div>
+    <div class="cmp-k">찾는 방법</div><div class="cmp-c">분류·지역·기간·장소를 직접 입력해 목록 확인</div><div class="cmp-c hl">등록하면 의미 유사도로 후보를 자동 순위화</div>
+    <div class="cmp-k">결과</div><div class="cmp-c">조건에 맞는 습득물 목록</div><div class="cmp-c hl">점수순 TOP 5 + 추천 근거</div>
+    <div class="cmp-k">표현이 다르면</div><div class="cmp-c">조건 불일치로 누락 (키워드 검색 TOP 5 적중 57.7%)</div><div class="cmp-c hl">의미로 연결 (TOP 5 적중 96.7%)</div>
+    <div class="cmp-k">시작 장벽</div><div class="cmp-c">회원가입 + 실명인증 후 신고</div><div class="cmp-c hl">이름·이메일·비밀번호만으로 가입</div>
+    <div class="cmp-k">새 습득물</div><div class="cmp-c">유사 물품 통보 방식이 있으나 매칭 기준은 공개 자료로 확인 불가</div><div class="cmp-c hl">기준 점수 0.78 이상만, 근거와 함께 알림</div>
+  </div>
+  <p class="src" style="margin-top:22px;">기존 방식은 LOST112 이용 안내(투데이e코노믹 '해봤습니다') 기준 · ReFind 수치는 자체 검증셋 측정값(슬라이드 11)</p>
+  <div class="slide-footer"><span class="logo-text">ReFind</span></div>
+  <div class="slide-number">4 / 14</div>
+</div>
+
+<!-- 5. 해결 -->
+<div class="slide" id="slide-5">
   <h2 class="slide-title">ReFind: 등록 한 번이면 끝</h2>
   <div class="row" style="align-items:flex-start; margin-top:20px;">
     <div class="step"><div class="n">1</div><h3>등록</h3><p class="b mut">물품, 색상, 장소, 날짜,<br>특징을 4단계로 입력</p></div>
@@ -123,26 +147,26 @@ p.b { font-size: 30px; line-height: 1.55; }
     <div class="step"><div class="n">3</div><h3>알림</h3><p class="b mut">새 습득물이 들어오면<br>다시 비교해 먼저 알려줌</p></div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">4 / 13</div>
+  <div class="slide-number">5 / 14</div>
 </div>
 
-<!-- 5. 시연 영상 -->
-<div class="slide" id="slide-5">
+<!-- 6. 시연 영상 -->
+<div class="slide" id="slide-6">
   <h2 class="slide-title" style="margin-bottom:36px;">시연: 등록부터 알림까지</h2>
   <div style="flex:1; border:3px dashed var(--line); border-radius:6px; background:#fff; display:flex; align-items:center; justify-content:center; flex-direction:column; margin-bottom:60px;">
     <div style="font-size:120px; color:var(--line);">▶</div>
     <p class="mut" style="font-size:30px;">시연 영상 1분 (이 영역에 영상 삽입)</p>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">5 / 13</div>
+  <div class="slide-number">6 / 14</div>
 </div>
 
-<!-- 6. 차별점 1 -->
-<div class="slide" id="slide-6">
-  <h2 class="slide-title">차별점 ① 찾아주는 게 아니라, 기다려줍니다</h2>
+<!-- 7. 차별점 1 -->
+<div class="slide" id="slide-7">
+  <h2 class="slide-title">차별점 ① 찾으러 가지 않아도, 후보가 먼저 옵니다</h2>
   <div class="row">
     <div class="col card">
-      <h3 class="mut">기존: 검색 (Pull)</h3>
+      <h3 class="mut">기존: 조건 검색 (Pull)</h3>
       <div class="tl" style="margin-top:34px;">
         <div class="pt"><p class="b">분실</p></div>
         <div class="pt"><p class="b">검색</p></div>
@@ -166,11 +190,11 @@ p.b { font-size: 30px; line-height: 1.55; }
     <span class="chip">기준 점수 0.78 이상만 알림</span><span class="chip">같은 매칭은 한 번만 발송</span><span class="chip">서비스 내 알림 + 이메일</span>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">6 / 13</div>
+  <div class="slide-number">7 / 14</div>
 </div>
 
-<!-- 7. 차별점 2 -->
-<div class="slide" id="slide-7">
+<!-- 8. 차별점 2 -->
+<div class="slide" id="slide-8">
   <h2 class="slide-title">차별점 ② 이름이 달라도 같은 물건을 알아봅니다</h2>
   <div class="card" style="margin-bottom:34px;">
     <p class="mut" style="font-size:24px; margin-bottom:8px;">내가 등록한 분실물</p>
@@ -192,11 +216,11 @@ p.b { font-size: 30px; line-height: 1.55; }
   </div>
   <p class="src" style="margin-top:26px;">한국어 다국어 문장 임베딩(MiniLM) 코사인 유사도, 실제 서비스 모델로 측정</p>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">7 / 13</div>
+  <div class="slide-number">8 / 14</div>
 </div>
 
-<!-- 8. 차별점 3 -->
-<div class="slide" id="slide-8">
+<!-- 9. 차별점 3 -->
+<div class="slide" id="slide-9">
   <h2 class="slide-title">차별점 ③ 왜 추천했는지 점수로 보여줍니다</h2>
   <div class="row" style="align-items:center; gap:80px;">
     <div class="col" style="flex:1.3;">
@@ -216,11 +240,11 @@ p.b { font-size: 30px; line-height: 1.55; }
     </div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">8 / 13</div>
+  <div class="slide-number">9 / 14</div>
 </div>
 
-<!-- 9. 차별점 4 -->
-<div class="slide" id="slide-9">
+<!-- 10. 차별점 4 -->
+<div class="slide" id="slide-10">
   <h2 class="slide-title">차별점 ④ 엉뚱한 지역의 물건은 걸러냅니다</h2>
   <div class="row">
     <div class="col card">
@@ -237,11 +261,11 @@ p.b { font-size: 30px; line-height: 1.55; }
     </div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">9 / 13</div>
+  <div class="slide-number">10 / 14</div>
 </div>
 
-<!-- 10. 성능 -->
-<div class="slide" id="slide-10">
+<!-- 11. 성능 -->
+<div class="slide" id="slide-11">
   <h2 class="slide-title">키워드 검색 대비 TOP 5 적중률 57.7% → 96.7%</h2>
   <div style="margin-top:6px;">
     <div class="bar-row"><span class="bar-label">키워드 검색 (LOST112식)</span><div class="bar-track"><div class="bar-fill" style="width:57.7%">57.7%</div></div></div>
@@ -255,11 +279,11 @@ p.b { font-size: 30px; line-height: 1.55; }
   </div>
   <p class="src" style="margin-top:26px;">지표: Recall@5, 정답이 상위 5개 안에 든 비율 · 자체 구축 검증셋(정답쌍 60건 + 방해 습득물 600건, 5회 반복 평균)<br>정답의 장소·날짜 단서를 없앤 엄격 조건에서 측정 · 실제 코드 그대로 실행 · 실데이터 평가는 향후 과제</p>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">10 / 13</div>
+  <div class="slide-number">11 / 14</div>
 </div>
 
-<!-- 11. 기술 구조 -->
-<div class="slide" id="slide-11">
+<!-- 12. 기술 구조 -->
+<div class="slide" id="slide-12">
   <h2 class="slide-title">운영 중인 서비스입니다</h2>
   <div class="row" style="align-items:center; gap:30px;">
     <div class="card" style="flex:1; text-align:center;"><h3>사용자</h3><p class="mut" style="font-size:24px;">브라우저</p></div>
@@ -274,11 +298,11 @@ p.b { font-size: 30px; line-height: 1.55; }
     <span class="chip">Next.js · TypeScript</span><span class="chip">FastAPI · SQLAlchemy</span><span class="chip">ONNX 임베딩 · FAISS</span><span class="chip">AWS 서울 리전</span><span class="chip">main push 시 자동 배포</span>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">11 / 13</div>
+  <div class="slide-number">12 / 14</div>
 </div>
 
-<!-- 12. 로드맵 -->
-<div class="slide" id="slide-12">
+<!-- 13. 로드맵 -->
+<div class="slide" id="slide-13">
   <h2 class="slide-title">다음 단계</h2>
   <div class="tl" style="margin-top:30px;">
     <div class="pt"><h3>지금</h3><p class="b mut">텍스트·지역·날짜 매칭<br>Push 알림<br>단계형 등록</p></div>
@@ -286,11 +310,11 @@ p.b { font-size: 30px; line-height: 1.55; }
     <div class="pt later"><h3>확장</h3><p class="b mut">카카오 알림톡<br>실데이터 정확도 평가<br>중고거래 플랫폼 연동 검토</p></div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
-  <div class="slide-number">12 / 13</div>
+  <div class="slide-number">13 / 14</div>
 </div>
 
-<!-- 13. Ending -->
-<div class="slide dark" id="slide-13">
+<!-- 14. Ending -->
+<div class="slide dark" id="slide-14">
   <h2 class="cover-title" style="font-size:96px;">감사합니다</h2>
   <div class="rule"></div>
   <p class="cover-sub">잃어버린 물건이 나를 먼저 찾아옵니다</p>
