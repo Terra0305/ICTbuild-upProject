@@ -113,7 +113,7 @@ p.b { font-size: 30px; line-height: 1.55; }
   <div class="row">
     <div class="col card"><div class="big" style="font-size:90px;">01</div><h3 style="margin-top:20px;">표현이 다르면 못 찾음</h3><p class="b mut">"카드지갑"으로 올렸는데<br>경찰은 "명함 케이스"로 등록</p></div>
     <div class="col card"><div class="big" style="font-size:90px;">02</div><h3 style="margin-top:20px;">사람이 일일이 거름</h3><p class="b mut">지역, 날짜, 종류를<br>하나씩 직접 조합해 검색</p></div>
-    <div class="col card"><div class="big" style="font-size:90px;">03</div><h3 style="margin-top:20px;">나중에 올라온 건 모름</h3><p class="b mut">내 물건이 내일 등록돼도<br>다시 검색하기 전엔 알 수 없음</p></div>
+    <div class="col card"><div class="big" style="font-size:90px;">03</div><h3 style="margin-top:20px;">신고부터 번거로움</h3><p class="b mut">분실물 신고에 가입과<br>실명인증이 필요해 포기하기 쉬움</p></div>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
   <div class="slide-number">3 / 14</div>
@@ -163,31 +163,22 @@ p.b { font-size: 30px; line-height: 1.55; }
 
 <!-- 7. 차별점 1 -->
 <div class="slide" id="slide-7">
-  <h2 class="slide-title">차별점 ① 찾으러 가지 않아도, 후보가 먼저 옵니다</h2>
+  <h2 class="slide-title">차별점 ① 알림은 "무엇을 기준으로" 오느냐가 중요합니다</h2>
   <div class="row">
     <div class="col card">
-      <h3 class="mut">기존: 조건 검색 (Pull)</h3>
-      <div class="tl" style="margin-top:34px;">
-        <div class="pt"><p class="b">분실</p></div>
-        <div class="pt"><p class="b">검색</p></div>
-        <div class="pt later"><p class="b mut">없음</p></div>
-        <div class="pt"><p class="b">다시 검색</p></div>
-      </div>
-      <p class="b mut" style="margin-top:36px;">사용자가 기억해서 반복해야 함</p>
+      <h3 class="mut">기존 방식</h3>
+      <p class="b">분류·지역·기간·장소 같은<br>입력 조건 중심으로 확인</p>
+      <p class="src" style="margin-top:22px;">유사 물품 통보 방식은 있으나<br>매칭 기준은 공개 자료로 확인 불가</p>
     </div>
     <div class="col card" style="border:3px solid var(--accent);">
-      <h3 class="acc">ReFind: 알림 (Push)</h3>
-      <div class="tl" style="margin-top:34px;">
-        <div class="pt"><p class="b">분실 등록</p></div>
-        <div class="pt"><p class="b">자동 매칭</p></div>
-        <div class="pt"><p class="b">신규 습득물</p></div>
-        <div class="pt"><p class="b acc" style="font-weight:800;">알림</p></div>
-      </div>
-      <p class="b" style="margin-top:36px;">매일 새벽 4시 수집 후 활성 분실물을 자동 재매칭</p>
+      <h3 class="acc">ReFind의 알림 기준</h3>
+      <p class="b" style="margin-bottom:12px;">① 의미 유사도 + 종류·색상·거리·날짜를 합산한 <b>점수</b></p>
+      <p class="b" style="margin-bottom:12px;">② 같은 시·도, 반경 5km, 분실 후 기간 안의 <b>후보만</b></p>
+      <p class="b">③ <b>0.78점 이상</b>만 알리고, 근거를 함께 보여줌</p>
     </div>
   </div>
   <div style="margin-top:40px;">
-    <span class="chip">기준 점수 0.78 이상만 알림</span><span class="chip">같은 매칭은 한 번만 발송</span><span class="chip">서비스 내 알림 + 이메일</span>
+    <span class="chip">매일 새벽 4시 수집 후 자동 재매칭</span><span class="chip">같은 매칭은 한 번만 발송</span><span class="chip">서비스 내 알림 + 이메일</span>
   </div>
   <div class="slide-footer"><span class="logo-text">ReFind</span></div>
   <div class="slide-number">7 / 14</div>
