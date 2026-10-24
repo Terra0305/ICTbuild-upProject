@@ -20,10 +20,12 @@ class FoundItemFaissIndex:
         self.index = faiss.IndexIDMap2(faiss.IndexFlatIP(dimension))
         self.id_to_uuid: dict[int, str] = {}
 
-    def build(self, entries: list[tuple[str, list[float]]]) -> None:
-        """Replace the index from ``(found_item_uuid, embedding)`` entries."""
+    def reset(self) -> None:
         self.index = faiss.IndexIDMap2(faiss.IndexFlatIP(self.dimension))
         self.id_to_uuid = {}
+
+    def add(self, entries: list[tuple[str, list[float]]]) -> None:
+        """Append ``(found_item_uuid, embedding)`` entries; safe to call in batches."""
         if not entries:
             return
 
@@ -31,11 +33,16 @@ class FoundItemFaissIndex:
         if vectors.ndim != 2 or vectors.shape[1] != self.dimension:
             raise ValueError(f"Expected embedding dimension {self.dimension}.")
 
-        ids = np.arange(1, len(entries) + 1, dtype=np.int64)
+        start = len(self.id_to_uuid) + 1
+        ids = np.arange(start, start + len(entries), dtype=np.int64)
         self.index.add_with_ids(vectors, ids)
-        self.id_to_uuid = {
-            int(index_id): item_id for index_id, (item_id, _) in zip(ids, entries, strict=True)
-        }
+        for index_id, (item_id, _) in zip(ids, entries, strict=True):
+            self.id_to_uuid[int(index_id)] = item_id
+
+    def build(self, entries: list[tuple[str, list[float]]]) -> None:
+        """Replace the index from ``(found_item_uuid, embedding)`` entries."""
+        self.reset()
+        self.add(entries)
 
     def search(self, query_embedding: list[float], limit: int = 100) -> list[tuple[str, float]]:
         if self.index.ntotal == 0 or limit <= 0:
