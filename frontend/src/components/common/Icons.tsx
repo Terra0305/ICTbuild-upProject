@@ -103,6 +103,11 @@ export const IconBox = (p: SVGProps<SVGSVGElement>) => (
     <path d="M3.500 8 12 12l8.500-4M12 12v8" />
   </svg>
 );
+export const IconExternal = (p: SVGProps<SVGSVGElement>) => (
+  <svg {...base(p)}>
+    <path d="M14 4h6v6M20 4l-9 9M18 14v4.500A1.500 1.500 0 0 1 16.500 20h-11A1.500 1.500 0 0 1 4 18.500v-11A1.500 1.500 0 0 1 5.500 6H10" />
+  </svg>
+);
 export const IconInfo = (p: SVGProps<SVGSVGElement>) => (
   <svg {...base(p)}>
     <circle cx="12" cy="12" r="8.5" />

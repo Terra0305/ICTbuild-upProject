@@ -1,14 +1,21 @@
 import logging
 import smtplib
-from datetime import UTC, datetime
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from email.message import EmailMessage
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.models import LostItem, Match, Notification, NotificationChannel, NotificationStatus
 
 logger = logging.getLogger(__name__)
+
+# A new account can qualify hundreds of matches at once (initial backfill); one
+# alert per match buried users. Only the best few per lost item are announced per
+# day, the rest stay visible on the matches page.
+MAX_NOTIFICATIONS_PER_LOST_ITEM_PER_DAY = 3
 
 
 def _send_email(to_address: str, subject: str, body: str) -> None:
@@ -30,15 +37,60 @@ def _send_email(to_address: str, subject: str, body: str) -> None:
         smtp.send_message(message)
 
 
+def plan_notifications(
+    matches: list[Match], already_today: dict, cap: int = MAX_NOTIFICATIONS_PER_LOST_ITEM_PER_DAY
+) -> tuple[list[Match], list[Match]]:
+    """Split fresh matches into (to notify, suppressed) with a per-lost-item daily cap.
+
+    Highest scores win; notifications already sent in the last day use up the cap.
+    """
+    by_lost_item: dict = defaultdict(list)
+    for match in matches:
+        if match.notified_at is None:
+            by_lost_item[match.lost_item_id].append(match)
+
+    notify: list[Match] = []
+    suppressed: list[Match] = []
+    for lost_item_id, group in by_lost_item.items():
+        group.sort(key=lambda m: m.final_score, reverse=True)
+        room = max(cap - already_today.get(lost_item_id, 0), 0)
+        notify.extend(group[:room])
+        suppressed.extend(group[room:])
+    return notify, suppressed
+
+
+def _sent_in_last_day(db: Session, lost_item_ids: set) -> dict:
+    if not lost_item_ids:
+        return {}
+    since = datetime.now(UTC) - timedelta(days=1)
+    rows = (
+        db.query(Notification.lost_item_id, func.count())
+        .filter(
+            Notification.lost_item_id.in_(lost_item_ids),
+            Notification.channel == NotificationChannel.IN_APP,
+            Notification.created_at >= since,
+        )
+        .group_by(Notification.lost_item_id)
+        .all()
+    )
+    return dict(rows)
+
+
 def notify_matches(db: Session, matches: list[Match]) -> list[Notification]:
     """Create IN_APP + EMAIL notifications for matches that just crossed the
-    notification threshold (spec §9.3). Skips matches already notified."""
+    notification threshold (spec §9.3). Skips matches already notified and caps
+    alerts per lost item per day; matches over the cap are marked handled so they
+    are not announced later one by one."""
     created: list[Notification] = []
 
-    for match in matches:
-        if match.notified_at is not None:
-            continue
+    to_notify, suppressed = plan_notifications(
+        matches, _sent_in_last_day(db, {m.lost_item_id for m in matches})
+    )
+    now = datetime.now(UTC)
+    for match in suppressed:
+        match.notified_at = now
 
+    for match in to_notify:
         lost_item = db.get(LostItem, match.lost_item_id)
         if lost_item is None:
             continue

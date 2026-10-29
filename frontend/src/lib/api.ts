@@ -183,6 +183,7 @@ interface FoundItemResponseRaw {
   contact_text: string | null;
   description: string | null;
   image_url: string | null;
+  detail_url: string | null;
   status: "STORED" | "RETURNED" | "DISPOSED" | "UNKNOWN";
 }
 
@@ -216,6 +217,7 @@ function mapFoundItem(raw: FoundItemResponseRaw): FoundItem {
     contactText: raw.contact_text ?? undefined,
     description: raw.description ?? undefined,
     imageUrl: raw.image_url ?? undefined,
+    detailUrl: raw.detail_url ?? undefined,
     status: raw.status,
   };
 }

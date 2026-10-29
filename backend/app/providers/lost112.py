@@ -40,7 +40,14 @@ class Lost112Provider:
     endpoint_name = "getLosfundInfoAccToClAreaPd"
     # The mobile subdomain is no longer consistently reachable. Use the
     # official primary domain so the link works on both desktop and mobile.
-    detail_base_url = "https://www.lost112.go.kr/"
+    detail_base_url = "https://www.lost112.go.kr/find/findDetail.do"
+
+    @classmethod
+    def build_detail_url(cls, atc_id: str, found_sequence: str | None) -> str | None:
+        """Public LOST112 page for one found item; None without a sequence number."""
+        if not atc_id or not found_sequence:
+            return None
+        return f"{cls.detail_base_url}?{urlencode({'ATC_ID': atc_id, 'FD_SN': found_sequence})}"
 
     def fetch_page(
         self, start_date: date, end_date: date, page_no: int = 1, num_of_rows: int = 100
@@ -83,12 +90,7 @@ class Lost112Provider:
             image_url = raw.get("fdFilePathImg") or None
             if image_url and image_url.endswith("img02_no_img.gif"):
                 image_url = None
-            detail_url = None
-            if found_sequence:
-                detail_url = (
-                    f"{Lost112Provider.detail_base_url}?"
-                    f"{urlencode({'ATC_ID': atc_id, 'FD_SN': found_sequence})}"
-                )
+            detail_url = Lost112Provider.build_detail_url(atc_id, found_sequence)
             items.append(
                 FoundItemDTO(
                     source_item_id=atc_id,

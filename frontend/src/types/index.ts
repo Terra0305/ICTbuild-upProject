@@ -41,6 +41,8 @@ export interface FoundItem {
   contactText?: string;
   description?: string;
   imageUrl?: string;
+  /** LOST112 원문 게시 페이지. 출처가 LOST112일 때만 있다. */
+  detailUrl?: string;
   status: FoundItemStatus;
 }
 

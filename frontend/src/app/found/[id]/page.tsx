@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { IconBack, IconImage } from "@/components/common/Icons";
+import { IconBack, IconExternal, IconImage } from "@/components/common/Icons";
 import { Button, LinkButton, Notice, PageShell } from "@/components/common/ui";
 import { CATEGORY_OPTIONS, COLOR_OPTIONS, REGION_OPTIONS } from "@/constants";
 import { getFoundItem } from "@/lib/api";
@@ -102,6 +102,19 @@ export default function FoundItemDetailPage({ params }: { params: Promise<{ id: 
             <Info label="색상" value={colors || "-"} />
             <Info label="설명" value={item.description || "-"} wide />
           </dl>
+
+          {item.detailUrl && (
+            <a
+              href={item.detailUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:opacity-85"
+            >
+              LOST112 원본 보기
+              <IconExternal width={16} height={16} />
+              <span className="sr-only">(새 창)</span>
+            </a>
+          )}
         </div>
       </article>
 

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.ai import geo
+from app.ai.colors import color_codes_from_text
 from app.db.session import SessionLocal
 from app.models import FoundItem, FoundItemStatus, LostItem, LostItemStatus, SyncRun, SyncRunStatus
 from app.providers.lost112 import FoundItemDTO, Lost112Provider
@@ -42,35 +43,6 @@ def _category_code(category_raw: str) -> str:
     return next((code for keyword, code in mappings if keyword in value), "ETC")
 
 
-def _color_codes(color_raw: str) -> list[str]:
-    mappings = (
-        ("검정", "BLACK"),
-        ("블랙", "BLACK"),
-        ("흰", "WHITE"),
-        ("화이트", "WHITE"),
-        ("회색", "GRAY"),
-        ("그레이", "GRAY"),
-        ("남색", "NAVY"),
-        ("네이비", "NAVY"),
-        ("빨강", "RED"),
-        ("레드", "RED"),
-        ("파랑", "BLUE"),
-        ("블루", "BLUE"),
-        ("초록", "GREEN"),
-        ("녹색", "GREEN"),
-        ("에메랄드", "GREEN"),
-        ("노랑", "YELLOW"),
-        ("핑크", "PINK"),
-        ("보라", "PURPLE"),
-        ("갈색", "BROWN"),
-        ("주황", "ORANGE"),
-        ("은색", "SILVER"),
-        ("금색", "GOLD"),
-        ("베이지", "BEIGE"),
-    )
-    return list(dict.fromkeys(code for keyword, code in mappings if keyword in color_raw))
-
-
 def _save_dto(db: Session, dto: FoundItemDTO) -> tuple[FoundItem, bool]:
     found_item, is_new = found_item_service.upsert_found_item(
         db,
@@ -78,7 +50,7 @@ def _save_dto(db: Session, dto: FoundItemDTO) -> tuple[FoundItem, bool]:
         source_item_id=dto.source_item_id,
         title=dto.title,
         category_code=_category_code(dto.category_raw),
-        color_codes=_color_codes(dto.color_raw),
+        color_codes=color_codes_from_text(dto.color_raw),
         found_date=dto.found_date,
         # LOST112 gives no region code; derive the 시·도 from the storage place text.
         region_code=geo.region_from_text(dto.storage_place),

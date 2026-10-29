@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { CountUp } from "@/components/common/CountUp";
 import { Meter } from "@/components/common/Meter";
 import { Reveal } from "@/components/common/Reveal";
-import { IconBack, IconCalendar, IconImage, IconInfo, IconPin } from "@/components/common/Icons";
+import { IconBack, IconCalendar, IconExternal, IconImage, IconInfo, IconPin } from "@/components/common/Icons";
 import {
   EmptyState,
   LinkButton,
@@ -29,6 +29,9 @@ const BREAKDOWN_LABELS: Array<[keyof MatchScoreBreakdown, string]> = [
   ["location", "장소"],
   ["date", "날짜"],
 ];
+
+/** 비교에 쓰인 항목이 이 개수 이하이면 점수를 참고만 하도록 안내한다. */
+const FEW_SIGNALS = 3;
 
 export default function LostItemMatchesPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -139,7 +142,17 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
                     </ul>
                   )}
                   {detail.length > 0 && (
-                    <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-3">
+                    <p className="mt-4 flex flex-wrap items-center gap-x-2 text-xs text-ink-2">
+                      <span className="num font-bold text-ink">
+                        {BREAKDOWN_LABELS.length}개 중 {detail.length}개 항목 비교됨
+                      </span>
+                      {detail.length <= FEW_SIGNALS && (
+                        <span>· 비교한 정보가 적어 점수는 참고용이에요. 사진과 설명을 꼭 직접 확인해주세요.</span>
+                      )}
+                    </p>
+                  )}
+                  {detail.length > 0 && (
+                    <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2.5 sm:grid-cols-3">
                       {detail.map(([key, label]) => {
                         const value = match.scoreBreakdown[key] ?? 0;
                         const pct = Math.round(value * 100);
@@ -167,6 +180,18 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
                   출처 {item.source === "LOST112" ? "경찰청 LOST112" : "기관 등록"}
                 </span>
                 <div className="flex items-center gap-2">
+                  {item.detailUrl && (
+                    <a
+                      href={item.detailUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-surface-2 hover:text-ink"
+                    >
+                      원본 보기
+                      <IconExternal width={14} height={14} />
+                      <span className="sr-only">(새 창, LOST112)</span>
+                    </a>
+                  )}
                   <Link
                     href={`/found/${item.id}`}
                     className="inline-flex min-h-10 items-center rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:opacity-85"
