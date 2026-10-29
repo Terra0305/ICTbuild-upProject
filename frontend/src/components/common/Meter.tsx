@@ -10,6 +10,7 @@ export function Meter({ percent, delay = 0 }: { percent: number; delay?: number 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
+    // 아래쪽 여백이 크면 낮은 화면(720px 등)에서 하단 항목이 스크롤 전까지 0으로 멈춘다.
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -17,7 +18,7 @@ export function Meter({ percent, delay = 0 }: { percent: number; delay?: number 
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -160px 0px", threshold: 0.2 },
+      { rootMargin: "0px 0px -48px 0px", threshold: 0.2 },
     );
     io.observe(el);
     return () => io.disconnect();
