@@ -29,4 +29,4 @@ def test_parse_xml_maps_lost112_fields_and_ignores_placeholder_image() -> None:
     assert item.found_date == date(2026, 7, 20)
     assert item.title == "검정 지갑"
     assert item.image_url is None
-    assert item.detail_url == "https://www.lost112.go.kr/find/findDetail.do?ATC_ID=F202607200001&FD_SN=3"
+    assert item.source_item_id == "F202607200001"

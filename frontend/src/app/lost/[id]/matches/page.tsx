@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 
 import { CountUp } from "@/components/common/CountUp";
 import { Meter } from "@/components/common/Meter";
+import { FoundItemShortcuts } from "@/components/found/FoundItemLinks";
 import { Reveal } from "@/components/common/Reveal";
-import { IconBack, IconCalendar, IconExternal, IconImage, IconInfo, IconPin } from "@/components/common/Icons";
+import { IconBack, IconCalendar, IconImage, IconInfo, IconPin } from "@/components/common/Icons";
 import {
   EmptyState,
   LinkButton,
@@ -179,19 +180,8 @@ export default function LostItemMatchesPage({ params }: { params: Promise<{ id: 
                 <span className="text-xs text-ink-2">
                   출처 {item.source === "LOST112" ? "경찰청 LOST112" : "기관 등록"}
                 </span>
-                <div className="flex items-center gap-2">
-                  {item.detailUrl && (
-                    <a
-                      href={item.detailUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-10 items-center gap-1.5 rounded-full px-4 text-sm font-semibold text-ink-2 ring-1 ring-line hover:bg-surface-2 hover:text-ink"
-                    >
-                      원본 보기
-                      <IconExternal width={14} height={14} />
-                      <span className="sr-only">(새 창, LOST112)</span>
-                    </a>
-                  )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <FoundItemShortcuts item={item} />
                   <Link
                     href={`/found/${item.id}`}
                     className="inline-flex min-h-10 items-center rounded-full bg-ink px-5 text-sm font-semibold text-bg hover:opacity-85"

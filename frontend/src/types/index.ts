@@ -31,6 +31,8 @@ export interface LostItem {
 export interface FoundItem {
   id: string;
   source: "LOST112" | "INSTITUTION";
+  /** 출처 시스템의 관리번호(LOST112 atcId). 보관 기관에 문의할 때 쓴다. */
+  sourceItemId: string;
   title: string;
   categoryCode: string;
   colorCodes: string[];
@@ -41,8 +43,6 @@ export interface FoundItem {
   contactText?: string;
   description?: string;
   imageUrl?: string;
-  /** LOST112 원문 게시 페이지. 출처가 LOST112일 때만 있다. */
-  detailUrl?: string;
   status: FoundItemStatus;
 }
 

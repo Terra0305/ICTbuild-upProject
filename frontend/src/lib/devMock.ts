@@ -157,6 +157,7 @@ function foundRaw(index: number) {
   return {
     id: `dev-found-${index + 1}`,
     source: "LOST112" as const,
+    source_item_id: `DEV-F${index + 1}`,
     title: f[0],
     category_code: f[1],
     color_codes: [...f[2]],
@@ -167,7 +168,6 @@ function foundRaw(index: number) {
     contact_text: "02-0000-0000",
     description: "개발용 예시 데이터입니다. 실제 습득물이 아닙니다.",
     image_url: null,
-    detail_url: null,
     status: "STORED" as const,
   };
 }

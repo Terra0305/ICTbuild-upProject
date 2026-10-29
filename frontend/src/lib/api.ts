@@ -173,6 +173,7 @@ export async function closeLostItem(
 interface FoundItemResponseRaw {
   id: string;
   source: "LOST112" | "INSTITUTION";
+  source_item_id: string;
   title: string;
   category_code: string;
   color_codes: string[];
@@ -183,7 +184,6 @@ interface FoundItemResponseRaw {
   contact_text: string | null;
   description: string | null;
   image_url: string | null;
-  detail_url: string | null;
   status: "STORED" | "RETURNED" | "DISPOSED" | "UNKNOWN";
 }
 
@@ -207,6 +207,7 @@ function mapFoundItem(raw: FoundItemResponseRaw): FoundItem {
   return {
     id: raw.id,
     source: raw.source,
+    sourceItemId: raw.source_item_id,
     title: raw.title,
     categoryCode: raw.category_code,
     colorCodes: raw.color_codes,
@@ -217,7 +218,6 @@ function mapFoundItem(raw: FoundItemResponseRaw): FoundItem {
     contactText: raw.contact_text ?? undefined,
     description: raw.description ?? undefined,
     imageUrl: raw.image_url ?? undefined,
-    detailUrl: raw.detail_url ?? undefined,
     status: raw.status,
   };
 }

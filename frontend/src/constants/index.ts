@@ -38,6 +38,12 @@ export const COLOR_OPTIONS = [
   { code: "OTHER", label: "기타" },
 ] as const;
 
+/** 경찰청 습득물 검색. LOST112는 2026-01 경찰민원24로 통합돼 습득물 한 건으로 바로 가는 주소는 없다. */
+export const POLICE_FOUND_SEARCH_URL = "https://minwon24.police.go.kr/cvlcpt/cvlcptAply.do?cvlcptId=MW-201";
+
+/** 카카오맵 검색(공식 URL 스킴). 보관 장소의 주소·전화번호를 지도에서 확인한다. */
+export const mapSearchUrl = (place: string) => `https://map.kakao.com/link/search/${encodeURIComponent(place)}`;
+
 export const MATCH_DISPLAY_THRESHOLD = 0.5;
 export const MATCH_NOTIFICATION_THRESHOLD = 0.78;
 

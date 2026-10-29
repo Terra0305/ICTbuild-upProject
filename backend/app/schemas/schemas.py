@@ -88,6 +88,7 @@ class LostItemCloseRequest(BaseModel):
 class FoundItemResponse(BaseModel):
     id: uuid.UUID
     source: str
+    source_item_id: str
     title: str
     category_code: str
     color_codes: list[str]
